@@ -566,3 +566,39 @@ body{font-size:17px;font-weight:450}
 .flutua{position:fixed;right:14px;bottom:14px;z-index:40;display:grid;place-items:center;width:54px;height:54px;border-radius:50%;background:#25d366;color:#05311b;box-shadow:0 6px 18px rgba(0,0,0,.25)}
 .flutua svg{width:28px;height:28px}
 .toast{bottom:78px}
+
+/* ===== v19: a camiseta fica travada desde o começo (à esquerda no computador, em cima no celular); o resto rola ===== */
+/* a peça (nome, descrição, fotos reais pequenas) e a chamada abrem a coluna das etapas */
+.configuration .peca-bloco{padding-bottom:22px}
+.configuration .trilha{margin-bottom:12px;font-size:14px}
+.configuration .peca,.configuration .peca.varias,.configuration .peca.sem-foto{display:block;margin:0}
+.configuration .peca-texto{display:grid;gap:6px}
+.configuration .peca-texto h1{font-size:clamp(28px,2.7vw,40px)}
+.configuration .peca-desc{margin-top:12px;max-width:none;font-size:17px;line-height:1.55}
+.configuration .peca-fotos,.configuration .peca.varias .peca-fotos{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:14px 0 0;padding:0;overflow:visible}
+.configuration .peca-fotos .rot{flex:0 0 100%}
+.configuration .peca-fotos .peca-foto,.configuration .peca.varias .peca-foto{flex:0 0 92px;display:block}
+.configuration .peca-foto img{border-radius:8px}
+.configuration .peca-foto:hover img,.configuration .peca-foto:focus-visible img{outline:3px solid var(--amarelo);outline-offset:1px}
+.configuration .intro{display:block;margin:22px 0 0;padding-top:20px;border-top:1px solid var(--linha)}
+.configuration .intro .chamada{font-size:clamp(30px,3vw,44px)}
+.configuration .intro-sub{margin-top:8px;font-size:16.5px;line-height:1.8}
+.configuration .preview-badge{display:none}
+/* a cor é a etapa 1 da mesma coluna: sem moldura própria e com a cartela embaixo do título */
+.configuration .control-section.color-bar{display:block;margin:0;padding:24px;border:0;border-bottom:1px solid var(--linha);background:none}
+.configuration .color-bar .section-heading{flex-direction:row;align-items:baseline;justify-content:space-between;gap:8px 14px;margin:0 0 14px;grid-row:auto}
+.configuration .color-bar .section-heading h2{font-size:30px}
+/* computador: a camiseta inteira cabe na altura da tela já na chegada, com o cabeçalho do site ainda à vista */
+@media(min-width:761px){
+  .stage-frame{width:min(100%,calc(100vh - 236px));min-width:340px}
+}
+@media(max-width:760px){
+  .configuration .control-section.color-bar{padding:20px 16px}
+  .configuration .peca-texto h1{font-size:27px}
+  .configuration .intro .chamada{font-size:32px}
+  .configuration .peca-fotos .peca-foto,.configuration .peca.varias .peca-foto{flex-basis:78px}
+}
+
+/* etapa 3: caminho para a tabela de medidas */
+.medidas-ajuda{margin:-4px 0 14px}
+.medidas-link{color:var(--tinta);font-weight:650;text-decoration:underline;text-underline-offset:3px}

@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Site novo da Mapra: o esqueleto completo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600..900&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400..700&display=swap">
+<style>
+:root{--preto:#0c0c0d;--tinta:#17181a;--amarelo:#ffe600;--papel:#f2f3f0;--branco:#fff;--giz:#4a4d51;--linha:#d9dbd6;--verde:#0a7a3b;--laranja:#b45309;--azul:#1d4ed8;--vermelho:#b3261e}
+*{box-sizing:border-box}
+body{margin:0;background:var(--papel);color:var(--tinta);font:450 17.5px/1.55 "Instrument Sans",system-ui,Arial,sans-serif}
+.caixa{max-width:1120px;margin:0 auto;padding-inline:20px}
+h1,h2,h3{font-family:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;font-weight:800;text-transform:uppercase;line-height:.96;letter-spacing:.01em;margin:0;text-wrap:balance}
+.rot{margin:0;font:500 12.5px/1.4 "DM Mono",ui-monospace,Consolas,monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--giz)}
+p{margin:0}
+a{color:inherit}
+.topo{background:var(--preto);color:#fff;padding:34px 0 30px}
+.topo .rot{color:var(--amarelo)}
+.topo h1{font-size:clamp(38px,6vw,72px);margin-top:8px}
+.topo h1 em{font-style:normal;color:var(--amarelo)}
+.topo p.sub{margin-top:12px;max-width:62ch;color:rgba(255,255,255,.86)}
+.topo .ver{display:inline-flex;margin-top:18px;padding:13px 20px;border-radius:8px;background:var(--amarelo);color:var(--preto);font-weight:650;text-decoration:none}
+section{padding:clamp(34px,5vw,60px) 0}
+section + section{border-top:1px solid var(--linha)}
+.cab{display:grid;gap:8px;margin-bottom:22px}
+.cab h2{font-size:clamp(30px,4.2vw,48px)}
+.cab p{max-width:66ch;color:#26282b}
+/* antes e depois para o Google */
+.dupla{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.quadro{background:var(--branco);border:1.5px solid var(--tinta);padding:20px 22px}
+.quadro.escuro{background:var(--preto);color:#fff}
+.quadro h3{font-size:27px;margin-bottom:12px}
+.quadro ul{margin:0;padding:0;list-style:none;display:grid;gap:9px}
+.quadro li{padding-left:24px;position:relative}
+.quadro li::before{content:"";position:absolute;left:0;top:.52em;width:11px;height:11px;background:var(--vermelho)}
+.quadro.escuro li::before{background:var(--amarelo)}
+/* o esqueleto */
+.legenda{display:flex;flex-wrap:wrap;gap:8px 18px;margin-bottom:18px;font-size:15.5px}
+.legenda span{display:inline-flex;align-items:center;gap:8px}
+.legenda i,.pag i{flex:none;width:13px;height:13px;border-radius:50%}
+.pronto{background:var(--verde)}.falta{background:var(--laranja)}.depois{background:var(--azul)}
+.grupos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}
+.grupo{background:var(--branco);border:1.5px solid var(--tinta)}
+.grupo > header{padding:14px 18px 12px;border-bottom:1.5px solid var(--tinta)}
+.grupo.g1 > header{background:#e3f4ea}.grupo.g2 > header{background:#fdefd8}.grupo.g3 > header{background:#e2ebfd}
+.grupo h3{font-size:26px}
+.grupo header p{margin-top:4px;font-size:15px;color:#33363a}
+.pag{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 10px;align-items:start;padding:13px 18px;border-bottom:1px solid var(--linha)}
+.pag:last-child{border-bottom:0}
+.pag i{margin-top:.42em}
+.pag b{font-weight:650}
+.pag b a{text-decoration:underline;text-underline-offset:3px}
+.pag span{grid-column:2;font-size:15.5px;color:#33363a}
+.pag .de{display:inline-block;margin-top:3px;padding:1px 7px;background:var(--amarelo);font:500 11.5px/1.5 "DM Mono",monospace;letter-spacing:.05em;text-transform:uppercase;color:var(--preto)}
+.nao{margin-top:16px;padding:14px 18px;background:var(--branco);border-left:5px solid var(--vermelho);outline:1px solid var(--linha)}
+/* o que falta receber */
+.lista{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 16px;margin:0;padding:0;list-style:none;counter-reset:n}
+.lista li{counter-increment:n;display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:start;padding:14px 16px;background:var(--branco);border:1.5px solid var(--tinta)}
+.lista li::before{content:counter(n);display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--amarelo);outline:1.5px solid var(--tinta);font:500 14px "DM Mono",monospace}
+.lista b{display:block;font-weight:650}
+.lista span{font-size:15.5px;color:#33363a}
+.pe{padding:22px 0 40px;font-size:14.5px;color:var(--giz)}
+@media (max-width:900px){.grupos{grid-template-columns:minmax(0,1fr)}.dupla,.lista{grid-template-columns:minmax(0,1fr)}}
+@media print{.topo .ver{display:none}section{padding:18px 0}.grupo,.quadro,.lista li{break-inside:avoid}}
+</style>
+</head>
+<body>
+
+<header class="topo"><div class="caixa">
+  <p class="rot">Mapra Uniformes · site novo</p>
+  <h1>O esqueleto <em>completo</em> do site</h1>
+  <p class="sub">O que já está pronto na prévia, o que falta antes de publicar e o que entra depois. Página de apresentação: não faz parte do site.</p>
+  <a class="ver" href="./">Abrir a prévia do site</a>
+</div></header>
+
+<section><div class="caixa">
+  <div class="cab"><p class="rot">Para o Google</p><h2>Como o site aparece hoje e como vai aparecer</h2>
+    <p>O Google lê o título, a descrição e o texto de cada página para decidir em quais buscas mostrar o site.</p></div>
+  <div class="dupla">
+    <div class="quadro">
+      <h3>Site de hoje</h3>
+      <ul>
+        <li>27 páginas, todas com o mesmo título e a mesma descrição.</li>
+        <li>Idioma marcado como inglês.</li>
+        <li>Nenhum produto diz como é a personalização, a gramatura do tecido ou o prazo.</li>
+        <li>As dúvidas falam de uma tabela de medidas, mas ela não está no site.</li>
+        <li>Ao compartilhar o link, a imagem que aparece é só o ícone.</li>
+      </ul>
+    </div>
+    <div class="quadro escuro">
+      <h3>Site novo (já na prévia)</h3>
+      <ul>
+        <li>Cada página com o seu título e a sua descrição.</li>
+        <li>Marcado como português do Brasil.</li>
+        <li>Os mesmos endereços de hoje: o que o Google já conhece continua valendo.</li>
+        <li>Mapa do site com todas as páginas, para o Google achar tudo.</li>
+        <li>Empresa, dúvidas e cada produto escritos também no formato que o Google lê.</li>
+      </ul>
+    </div>
+  </div>
+</div></section>
+
+<section><div class="caixa">
+  <div class="cab"><p class="rot">O esqueleto</p><h2>Todas as páginas do site</h2></div>
+  <p class="legenda">
+    <span><i class="pronto"></i>Pronto na prévia</span>
+    <span><i class="falta"></i>Estrutura criada, falta o conteúdo</span>
+    <span><i class="depois"></i>Entra depois de publicar (já com a página “em breve”)</span>
+  </p>
+  <div class="grupos">
+
+    <div class="grupo g1">
+      <header><h3>1 · Vender</h3><p>O caminho do visitante até o pedido.</p></header>
+      <div class="pag"><i class="pronto"></i><b><a href="./">Capa</a></b><span>Promessa, tipos de peça, como pedir, as mais pedidas, para quem, a fábrica.</span></div>
+      <div class="pag"><i class="pronto"></i><b><a href="catalogo">Catálogo</a></b><span>21 modelos, com filtro por tipo, e em cada cartão o tecido e o desenho do modelo.</span></div>
+      <div class="pag"><i class="pronto"></i><b><a href="catalogo/camiseta-pv-manga-curta">Camiseta PV com personalizador</a></b><span>Cor, logo no lugar certo, tamanhos. É o modelo a aprovar.</span></div>
+      <div class="pag"><i class="falta"></i><b>Personalizador nas outras 20 peças</b><span>Começa pela polo, depois da aprovação. Cada peça precisa de uma foto lisa de frente e de costas.</span></div>
+      <div class="pag"><i class="pronto"></i><b>Meu pedido</b><span>Várias peças num envio só, pelo WhatsApp, com a ficha de cada peça em imagem.</span></div>
+    </div>
+
+    <div class="grupo g2">
+      <header><h3>2 · Explicar e dar confiança</h3><p>O que a pessoa pergunta antes de fechar.</p></header>
+      <div class="pag"><i class="falta"></i><b><a href="tabela-de-medidas">Tabela de medidas</a></b><span>Uma tabela por modelagem, com link dentro da etapa de tamanhos.<br><span class="de">Depende da Mapra</span></span></div>
+      <div class="pag"><i class="falta"></i><b><a href="como-funciona">Como funciona o pedido</a></b><span>Os quatro passos, mínimo, pagamento e envio já estão. Faltam o prazo e os jeitos de personalizar.<br><span class="de">Depende da Mapra</span></span></div>
+      <div class="pag"><i class="falta"></i><b><a href="sobre">Sobre a fábrica</a></b><span>Fotos reais, endereço, horário do mostruário, CNPJ.<br><span class="de">Depende da Mapra</span></span></div>
+      <div class="pag"><i class="pronto"></i><b><a href="duvidas">Dúvidas</a></b><span>Perguntas e respostas, lidas também pelo Google.</span></div>
+      <div class="pag"><i class="pronto"></i><b><a href="contato">Contato</a></b><span>WhatsApp, telefones, e-mail, endereço e horários.</span></div>
+      <div class="pag"><i class="falta"></i><b><a href="privacidade">Privacidade e cookies</a></b><span>Texto escrito conforme o site funciona. Falta a Mapra revisar.</span></div>
+      <div class="pag"><i class="pronto"></i><b>Página de endereço não encontrado</b><span>Leva de volta ao catálogo quem cair num link quebrado.</span></div>
+    </div>
+
+    <div class="grupo g3">
+      <header><h3>3 · Crescer no Google</h3><p>Entra depois de publicar, aos poucos.</p></header>
+      <div class="pag"><i class="depois"></i><b><a href="para-empresas">Uma página por tipo de empresa</a></b><span>Indústria, restaurantes, comércio, academias, eventos e grupos. Cada uma com as peças certas e texto próprio.</span></div>
+      <div class="pag"><i class="depois"></i><b><a href="uniformes-entregues">Uniformes entregues</a></b><span>Fotos de trabalhos reais e avaliações do Google.<br><span class="de">Depende da Mapra</span></span></div>
+      <div class="pag"><i class="depois"></i><b><a href="guias">Guias (blog)</a></b><span>Dois textos por mês a partir do terceiro mês. Exemplo: “Malha PV, dryfit ou piquet: qual escolher”.</span></div>
+      <div class="pag"><i class="depois"></i><b>Tema do mês</b><span>A capa muda com a campanha: Outubro Rosa, Novembro Azul.</span></div>
+      <div class="pag"><i class="depois"></i><b>Atendemos Curitiba</b><span>Só com conteúdo real de como a Mapra atende lá.</span></div>
+    </div>
+
+  </div>
+  <p class="nao"><b>O que não entra:</b> páginas iguais trocando só o nome da cidade (“Uniformes Londrina”, “Uniformes Maringá”). O Google trata isso como spam.</p>
+</div></section>
+
+<section><div class="caixa">
+  <div class="cab"><p class="rot">Para fechar</p><h2>O que falta receber da Mapra</h2></div>
+  <ol class="lista">
+    <li><div><b>Tabela de medidas</b><span>De cada modelagem: tradicional, feminina, infantil se houver.</span></div></li>
+    <li><div><b>Regra do pedido mínimo</b><span>10 peças por pedido, por modelo ou por arte?</span></div></li>
+    <li><div><b>Prazo de produção</b><span>Quantos dias depois da arte aprovada.</span></div></li>
+    <li><div><b>Jeitos de personalizar</b><span>Silk, bordado, sublimação, DTF: quais a Mapra faz e em quais peças.</span></div></li>
+    <li><div><b>Fotos reais da fábrica</b><span>Para a capa e para a página “Sobre a fábrica”.</span></div></li>
+    <li><div><b>Fotos de uniformes entregues</b><span>Com autorização do cliente, para a página de trabalhos.</span></div></li>
+    <li><div><b>Cores de cada peça</b><span>Moletom, avental, touca, oversized, calça e boné: confirmar as cores que existem.</span></div></li>
+    <li><div><b>Tamanho real das áreas de estampa</b><span>Peito, costas, manga e barra, em centímetros.</span></div></li>
+  </ol>
+</div></section>
+
+<p class="pe caixa">Prévia de trabalho. As páginas marcadas como prontas podem mudar depois da reunião.</p>
+</body>
+</html>

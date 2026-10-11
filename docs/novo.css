@@ -122,7 +122,7 @@ label.btn:focus-within{outline:3px solid var(--tinta);outline-offset:3px}
 .duvidas details p{margin-top:8px;color:#33363a;max-width:66ch}
 /* rodapé */
 .rodape{background:var(--preto);color:rgba(255,255,255,.8);font-size:15.5px}
-.rodape .caixa{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:28px;padding-block:46px 28px}
+.rodape .caixa{display:grid;grid-template-columns:repeat(auto-fit,minmax(186px,1fr));gap:28px 24px;padding-block:46px 28px}
 .rodape img{height:74px;width:auto}
 .rodape p{margin-top:12px}
 .rodape h3{color:#fff;font-size:16.5px;margin-bottom:8px}
@@ -469,7 +469,18 @@ section[id],:target{scroll-margin-top:calc(var(--fixo-h,120px) + 12px)}
 .cartao:hover{transform:translateY(-3px);box-shadow:0 12px 26px rgba(0,0,0,.11)}
 .cartao .img{aspect-ratio:3/4;background:#e9ebe7}
 .cartao .img img{width:100%;height:100%;object-fit:cover;object-position:50% 20%}
-.semfoto{width:100%;height:100%;display:grid;place-items:center;color:var(--giz);font-family:var(--mono);font-size:12.5px;letter-spacing:.08em;text-transform:uppercase}
+.semfoto{width:100%;height:100%;display:grid;place-items:center;align-content:center;gap:12px;color:var(--giz);font-family:var(--mono);font-size:12.5px;letter-spacing:.08em;text-transform:uppercase}
+.semfoto .ico{width:76px;height:76px;fill:none;stroke:currentColor;stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round}
+/* bolinha com o desenho do modelo, no pé do cartão (à direita das cores) */
+.cartao .txt{display:flex;flex-direction:column}
+.cartao-pe{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto;padding-top:4px;min-height:46px}
+.cartao-tipo{flex:none;margin-left:auto;display:grid;place-items:center;width:46px;height:46px;border-radius:50%;background:var(--papel);border:1.5px solid var(--tinta);color:var(--tinta)}
+.cartao-tipo .ico{width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.cartao:hover .cartao-tipo,.cartao:focus-visible .cartao-tipo{background:var(--amarelo)}
+/* tipo da peça e, ao lado, o tecido em destaque (é o que separa a polo de malha PV da polo de piquet) */
+.cartao-linha{display:flex;flex-wrap:wrap;align-items:center;gap:5px 8px}
+.cartao-tecido{padding:2px 7px 1px;background:var(--amarelo);color:var(--preto);font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;line-height:1.5}
+@media (max-width:560px){.cartao-pe{min-height:42px}.cartao-tipo{width:42px;height:42px}.cartao-tipo .ico{width:27px;height:27px}.cartao-tecido{font-size:11.5px;padding:1px 6px 0}}
 .cartao .txt{padding:13px 14px 16px;display:grid;gap:5px;align-content:start}
 .cartao h3{font-size:18px}
 .cores-n{font-family:var(--mono);font-size:13px;color:var(--giz);display:inline-flex;align-items:center;gap:7px}
@@ -625,3 +636,24 @@ section[id],:target{scroll-margin-top:calc(var(--fixo-h,120px) + 12px)}
 .contatos{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-top:26px}
 .contatos div{background:var(--branco);border:1.5px solid var(--tinta);padding:16px;display:grid;gap:4px;align-content:start}
 .contatos a{font-weight:600}
+
+/* ===== páginas da estrutura (novo/estrutura.py): quadro "Em breve", fatos em cartões e texto corrido ===== */
+.embreve{margin-top:30px;padding:22px 24px 24px;background:var(--branco);border:2px dashed var(--tinta);display:grid;gap:12px}
+.embreve-selo{justify-self:start;margin:0;padding:3px 10px 2px;background:var(--amarelo);color:var(--preto);font-family:var(--mono);font-size:12.5px;font-weight:500;letter-spacing:.09em;text-transform:uppercase}
+.embreve h2{font-size:clamp(26px,3vw,34px)}
+.embreve ul{margin:0;padding:0;list-style:none;display:grid;gap:8px}
+.embreve li{position:relative;padding-left:24px}
+.embreve li::before{content:"";position:absolute;left:0;top:.5em;width:11px;height:11px;background:var(--amarelo);outline:1.5px solid var(--tinta)}
+.embreve-falta{margin:2px 0 0;padding-top:12px;border-top:1px solid var(--linha);font-size:15.5px;color:var(--giz)}
+.acoes-texto{display:flex;flex-wrap:wrap;gap:10px}
+.bloco-curto{padding-bottom:clamp(18px,2.4vw,30px)}
+.cartoes-fato{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.cartoes-fato div{background:var(--branco);border:1.5px solid var(--tinta);padding:16px 18px;display:grid;gap:6px;align-content:start}
+.cartoes-fato h3{font-family:var(--titulo);font-size:23px;font-weight:800;text-transform:uppercase;line-height:1}
+.cartoes-fato p{font-size:16.5px;color:#26282b}
+.prosa{display:grid;gap:10px;max-width:68ch}
+.prosa h2{font-size:27px;margin-top:18px}
+.prosa p{color:#26282b}
+.prosa a{font-weight:600}
+.revisao{justify-self:start;padding:2px 9px 1px;background:var(--branco);border:1.5px solid var(--tinta);font-family:var(--mono);font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--tinta)!important}
+@media (max-width:520px){.embreve{padding:18px 16px 20px}.acoes-texto .btn{flex:1 1 100%}}
