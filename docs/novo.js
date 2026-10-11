@@ -737,7 +737,9 @@
       ['touchstart', 'wheel', 'keydown'].forEach(function (tipo) { window.addEventListener(tipo, function () { mexeu = true; }, { once: true, passive: true }); });
       var leva = function () { if (!mexeu) resultado.scrollIntoView({ behavior: 'auto', block: 'start' }); };
       leva();
-      window.addEventListener('load', leva); // de novo quando as fotos de cima terminam de carregar e a página assenta
+      // de novo quando a página assenta: as fotos de cima terminam de carregar e o cabeçalho fixo encolhe ao rolar
+      window.addEventListener('load', leva);
+      [250, 700].forEach(function (ms) { setTimeout(leva, ms); });
     }
   }
 })();
