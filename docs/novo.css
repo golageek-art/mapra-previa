@@ -252,7 +252,7 @@ section[id],:target{scroll-margin-top:calc(var(--fixo-h,120px) + 12px)}
 .vivo-sua{font-size:74px}
 .vivo-marca{font-size:122px}
 .vivo-tx{display:grid;gap:3px;min-width:0}
-.vivo-tx b{font-family:var(--titulo);font-size:24px;font-weight:800;text-transform:uppercase;line-height:1}
+.vivo-tx b{font-family:var(--titulo);font-size:24px;font-weight:800;text-transform:uppercase;line-height:1;text-wrap:balance}
 .vivo-cor{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:12.5px;color:var(--giz)}
 .vivo-cor i{flex:none;width:12px;height:12px;border-radius:50%;outline:1.5px solid var(--tinta)}
 .vivo-seta{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--amarelo);outline:1.5px solid var(--tinta);font-size:21px;line-height:1;transition:transform .15s ease}
@@ -396,22 +396,52 @@ section[id],:target{scroll-margin-top:calc(var(--fixo-h,120px) + 12px)}
 .forte-numeros b{font-family:var(--titulo);font-weight:800;font-size:clamp(30px,3.4vw,42px);line-height:1;text-transform:uppercase;color:var(--amarelo)}
 .forte-numeros span{font-size:15px;line-height:1.35;color:rgba(255,255,255,.8)}
 @media (max-width:900px){
-  .forte-palco{display:flex;flex-direction:column}
+  /* no celular a foto abre a página e some para dentro do preto; o título sobe por cima do fim dela */
+  .forte-palco{display:flex;flex-direction:column;isolation:isolate}
   .forte-palco::after{display:none}
-  .forte-foto{position:relative;order:2;width:100%;height:auto;aspect-ratio:16/10}
-  .forte-foto img{object-position:50% 100%}
-  .forte-texto{max-width:none;gap:16px;padding-block:24px 22px}
-  .capa-forte h1{font-size:clamp(34px,10.6vw,54px)}
+  .forte-palco .caixa{position:static}
+  .forte-foto{position:relative;z-index:-1;width:100%;height:auto;aspect-ratio:4/3;max-height:46vh;max-height:46svh}
+  .forte-foto::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(12,12,13,0) 44%,rgba(12,12,13,.6) 74%,var(--preto) 100%)}
+  .forte-foto img{object-position:50% 38%}
+  .forte-texto{max-width:none;gap:16px;margin-top:-68px;padding-block:0 24px}
+  /* a nota do Google fica sobre o canto da foto */
+  .capa-forte .capa-selo{position:absolute;top:12px;left:20px;z-index:2;box-shadow:0 2px 10px rgba(12,12,13,.25)}
+  .capa-forte h1{font-size:clamp(36px,11.4vw,58px);text-shadow:0 2px 18px rgba(12,12,13,.55)}
   .capa-forte .acoes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%}
-  .capa-forte .acoes .btn{padding:13px 8px;font-size:15.5px;gap:7px}
-  .capa-forte .capa-vivo-caixa{position:relative;right:auto;bottom:auto;width:100%}
+  .capa-forte .acoes .btn{padding:14px 8px;font-size:15.5px;gap:7px}
+  /* tipos de peça: grade de 4 por 2, ícone em cima e nome embaixo */
+  .forte-pecas{width:100%;gap:10px;margin-top:6px}
+  .forte-pecas nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;max-width:none}
+  .forte-pecas a{flex-direction:column;justify-content:center;gap:6px;min-height:78px;padding:10px 2px 9px;border:1px solid rgba(255,255,255,.24);border-radius:12px;background:#1b1c1e;font-size:13.5px;font-weight:700;letter-spacing:-.01em;text-align:center}
+  .forte-pecas a .ico{width:30px;height:30px;color:var(--amarelo)}
+  .forte-pecas a:hover .ico,.forte-pecas a:focus-visible .ico{color:inherit}
+  .pc-resto{display:none}
+  /* a camiseta que troca de cor: cartão escuro, com a peça sobre um fundo claro para toda cor aparecer */
+  .capa-forte .capa-vivo-caixa{position:relative;right:auto;bottom:auto;width:100%;margin:0}
+  .capa-forte .capa-vivo{padding:8px 12px 8px 8px;background:#1b1c1e;border:1px solid rgba(255,255,255,.24);border-radius:14px;box-shadow:none;color:#fff}
+  .capa-forte .capa-vivo:hover,.capa-forte .capa-vivo:focus-visible{transform:none;box-shadow:none;border-color:var(--amarelo)}
+  .capa-forte .vivo-peca{background:#e9ebe6;border-radius:9px}
+  .capa-forte .capa-vivo .vivo-logo{color:#fff}
+  .capa-forte .capa-vivo.clara .vivo-logo{color:var(--tinta)}
+  .capa-forte .capa-vivo .rot{color:var(--amarelo)}
+  .capa-forte .vivo-tx b{font-size:23px;text-wrap:balance}
+  .capa-forte .vivo-cor{color:rgba(255,255,255,.82)}
+  .capa-forte .vivo-cor i{outline-color:rgba(255,255,255,.75)}
+  .capa-forte .vivo-seta{outline:0;color:var(--preto)}
+  .capa-forte .vivo-pausa{right:-6px;top:-12px}
   .forte-numeros{grid-template-columns:repeat(2,minmax(0,1fr))}
   .forte-numeros li{padding:14px 12px 16px 0}
   .forte-numeros li + li{padding-left:12px}
   .forte-numeros li:nth-child(3){padding-left:0;border-left:0}
   .forte-numeros li:nth-child(n+3){border-top:1px solid #2c2e31}
 }
-@media (max-width:520px){.forte-pecas a{font-size:14px;padding:6px 11px 6px 8px}}
+@media (min-width:640px) and (max-width:900px){.forte-pecas nav{grid-template-columns:repeat(8,minmax(0,1fr))}}
+@media (max-width:520px){
+  .capa-forte .acoes{grid-template-columns:minmax(0,1fr)}
+  .capa-forte .acoes .btn{padding:15px 12px;font-size:17px}
+}
+@media (max-width:380px){.forte-pecas nav{gap:6px}.forte-pecas a{font-size:13px}.forte-pecas a .ico{width:28px;height:28px}}
+@media (max-width:340px){.forte-pecas a{font-size:12px}}
 @media (prefers-reduced-motion: reduce){.forte-pecas a{transition:none}}
 /* Catálogo: grade de cartões, filtros por tipo de peça. */
 .grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px}
