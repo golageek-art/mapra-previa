@@ -917,6 +917,19 @@ function groupedSizes(quantities) {
   }
   return groups.map((group) => group.name + ' ' + group.items.join(', ')).join('; ');
 }
+// os tamanhos agrupados por modelagem, para a ficha: [{ nome: 'Tradicional', itens: [['P', 4], ['M', 12]] }]
+function sizeGroups(quantities) {
+  const groups = [];
+  for (const [key, amount] of Object.entries(quantities)) {
+    if (!(amount > 0)) continue;
+    const cut = key.lastIndexOf(' ');
+    const nome = key.slice(0, cut), size = key.slice(cut + 1);
+    let group = groups.find((entry) => entry.nome === nome);
+    if (!group) { group = { nome, itens: [] }; groups.push(group); }
+    group.itens.push([size, amount]);
+  }
+  return groups;
+}
 // A peça pronta vira um item do "Meu pedido" do site (mesmo formato de src/novo/pedido.js, mais as artes com medida).
 // As imagens das logos não vão para lá: são pesadas e o cliente as manda na conversa do WhatsApp.
 const ORDER_KEY = 'mapra-pedido';
@@ -958,7 +971,7 @@ async function prepareFicha(id, current) {
     try { const saved = JSON.parse(localStorage.getItem('mapra-cliente')) || {}; cliente = [saved.empresa, saved.nome].filter(Boolean).join(' · '); } catch { /* sem dados ainda */ }
     const ficha = await desenhaFicha({
       peca: current.product.name, cor: { nome: current.color.name, hex: current.color.hex },
-      total: quantityTotal(current.quantities), tamanhos: groupedSizes(current.quantities), aviso: current.notes, cliente, vistas,
+      total: quantityTotal(current.quantities), grade: sizeGroups(current.quantities), aviso: current.notes, cliente, vistas,
       artes: arts.map((layer, index) => ({ n: index + 1, lugar: zoneById(layer.zoneId).label, medida: cm(layer.widthCm) + ' × ' + cm(layer.heightCm) + ' cm', arquivo: layer.art.name, aspecto: artLook(layer) })),
     });
     const logos = arts.map((layer, index) => ({ nome: (index + 1) + '-' + layer.art.name, blob: dataUrlToFile(layer.art.dataUrl, layer.art.name, layer.art.mime) }));

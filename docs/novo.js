@@ -283,7 +283,126 @@
     memoria = itens;
     try { localStorage.setItem(CHAVE, JSON.stringify(itens)); } catch (e) { /* idem */ }
     apagaFichasFora(itens.map(function (i) { return i.id; }));
+    poeEtapa(1);
     desenha();
+  }
+
+  /* ---------- o envio em dois toques, um botão por vez: 1) o texto do pedido; 2) as imagens (só quando há ficha) ---------- */
+  var CHAVE_ENVIO = 'mapra-envio';
+  var etapaNaMemoria = 1;
+  function etapa() {
+    try { return sessionStorage.getItem(CHAVE_ENVIO) === '2' ? 2 : 1; } catch (e) { return etapaNaMemoria; }
+  }
+  function poeEtapa(n) {
+    etapaNaMemoria = n;
+    try { if (n === 2) sessionStorage.setItem(CHAVE_ENVIO, '2'); else sessionStorage.removeItem(CHAVE_ENVIO); } catch (e) { /* vale a memória */ }
+    desenhaEtapa();
+  }
+  function temFichas() { return le().some(function (i) { return i.id && fichas[i.id]; }); }
+  function desenhaEtapa() {
+    if (!janela) return;
+    var tem = temFichas();
+    var dois = tem && etapa() === 2;
+    janela.querySelector('[data-envia]').hidden = dois;
+    janela.querySelector('[data-dica-fichas]').hidden = !tem || dois;
+    janela.querySelector('[data-passo2]').hidden = !dois;
+  }
+
+  /* ---------- ficha do pedido: uma imagem com o cliente e todas as peças (o mesmo do texto, para ir junto das fichas) ---------- */
+  function desenhaCapa(itens, cli) {
+    try {
+      var L = 1200, M = 44, util = L - M * 2;
+      var tela = document.createElement('canvas'); tela.width = L; tela.height = 7000;
+      var c = tela.getContext('2d');
+      var titulo = function (px) { return '800 ' + px + 'px "Big Shoulders Display", "Arial Narrow", Arial, sans-serif'; };
+      var corpo = function (px, peso) { return (peso || 500) + ' ' + px + 'px "Instrument Sans", Arial, sans-serif'; };
+      var quebra = function (texto, largura) {
+        var linhas = [];
+        String(texto).split('\n').forEach(function (paragrafo) {
+          var atual = '';
+          paragrafo.split(/\s+/).filter(Boolean).forEach(function (palavra) {
+            var tentativa = atual ? atual + ' ' + palavra : palavra;
+            if (atual && c.measureText(tentativa).width > largura) { linhas.push(atual); atual = palavra; } else atual = tentativa;
+          });
+          linhas.push(atual);
+        });
+        return linhas;
+      };
+      c.fillStyle = '#ffffff'; c.fillRect(0, 0, L, tela.height);
+      c.fillStyle = '#0c0c0d'; c.fillRect(0, 0, L, 132);
+      c.fillStyle = '#ffe600'; c.font = corpo(21, 700); c.fillText('MAPRA UNIFORMES', M, 48);
+      c.fillStyle = '#ffffff'; c.font = titulo(58); c.fillText('PEDIDO', M, 106);
+      c.textAlign = 'right'; c.font = corpo(21); c.fillStyle = 'rgba(255,255,255,.82)';
+      c.fillText(new Date().toLocaleDateString('pt-BR'), L - M, 48);
+      c.fillText('Feito no site', L - M, 80);
+      c.textAlign = 'left';
+      var y = 132 + 54;
+      // quem pede
+      [['Empresa', cli.empresa], ['Nome', cli.nome], ['Telefone', cli.telefone]].forEach(function (par) {
+        if (!par[1]) return;
+        c.fillStyle = '#4a4d51'; c.font = corpo(22, 600); c.fillText(par[0].toUpperCase(), M, y);
+        c.fillStyle = '#17181a'; c.font = corpo(30, 700); c.fillText(par[1], M + 170, y + 2);
+        y += 46;
+      });
+      y += 18;
+      var total = 0;
+      itens.forEach(function (item, indice) {
+        total += item.qtd;
+        c.fillStyle = '#d9dbd6'; c.fillRect(M, y - 26, util, 2); y += 22;
+        // número da peça e o nome
+        c.fillStyle = '#ffe600'; c.beginPath(); c.arc(M + 24, y - 12, 24, 0, Math.PI * 2); c.fill();
+        c.fillStyle = '#17181a'; c.font = corpo(26, 700); c.textAlign = 'center'; c.fillText(String(indice + 1), M + 24, y - 3); c.textAlign = 'left';
+        c.font = titulo(40);
+        quebra((item.qtd + ' × ' + item.nome).toUpperCase(), util - 66).forEach(function (linha) { c.fillText(linha, M + 66, y); y += 44; });
+        y += 4;
+        c.font = corpo(26, 600);
+        var detalhes = [item.cor ? 'Cor: ' + item.cor : 'Cor a definir'];
+        if (item.marca.length) detalhes.push('Marca: ' + item.marca.join(', ').toLowerCase());
+        item.artes.forEach(function (a) { detalhes.push('Arte: ' + textoArte(a)); });
+        if (item.tecnica) detalhes.push('Aplicação: ' + item.tecnica);
+        if (item.obs) detalhes.push('Aviso: ' + item.obs);
+        detalhes.forEach(function (d) { quebra(d, util - 66).forEach(function (linha) { c.fillText(linha, M + 66, y); y += 36; }); });
+        y += 10;
+        // tamanhos: um quadrinho por tamanho, com o tamanho em cima e a quantidade embaixo
+        var grupos = [];
+        Object.keys(item.tam).forEach(function (chave) {
+          var corte = chave.lastIndexOf(' '), nome = chave.slice(0, corte);
+          var grupo = grupos.filter(function (g) { return g.nome === nome; })[0];
+          if (!grupo) { grupo = { nome: nome, itens: [] }; grupos.push(grupo); }
+          grupo.itens.push([chave.slice(corte + 1), item.tam[chave]]);
+        });
+        grupos.forEach(function (grupo) {
+          c.fillStyle = '#4a4d51'; c.font = corpo(22, 600); c.fillText(grupo.nome, M + 66, y + 4); y += 18;
+          var lw = 96, lh = 90, vao = 9, x = M + 66;
+          grupo.itens.forEach(function (par) {
+            if (x + lw > L - M) { x = M + 66; y += lh + vao; }
+            c.fillStyle = '#eceee9'; c.fillRect(x, y, lw, 36);
+            c.fillStyle = '#ffffff'; c.fillRect(x, y + 36, lw, lh - 36);
+            c.strokeStyle = '#17181a'; c.lineWidth = 2; c.strokeRect(x, y, lw, lh);
+            c.beginPath(); c.moveTo(x, y + 36); c.lineTo(x + lw, y + 36); c.stroke();
+            c.textAlign = 'center'; c.fillStyle = '#17181a';
+            c.font = corpo(22, 700); c.fillText(String(par[0]), x + lw / 2, y + 26);
+            c.font = titulo(42); c.fillText(String(par[1]), x + lw / 2, y + 78);
+            c.textAlign = 'left';
+            x += lw + vao;
+          });
+          y += lh + 26;
+        });
+        y += 26;
+      });
+      c.fillStyle = '#17181a'; c.fillRect(M, y - 20, util, 3); y += 34;
+      c.font = titulo(46); c.fillText('TOTAL: ' + pecas(total).toUpperCase(), M, y); y += 44;
+      c.fillStyle = '#4a4d51'; c.font = corpo(21);
+      quebra('Pedido montado pelo cliente no site. A Mapra confere a arte, a cor, os tamanhos e o lugar de cada aplicação antes de produzir.', util).forEach(function (linha) { c.fillText(linha, M, y); y += 30; });
+      y += 22;
+      var pronta = document.createElement('canvas'); pronta.width = L; pronta.height = Math.ceil(y);
+      pronta.getContext('2d').drawImage(tela, 0, 0);
+      // direto para arquivo, sem esperar: o compartilhar do celular precisa ser chamado no mesmo toque
+      var dados = atob(pronta.toDataURL('image/jpeg', 0.9).split(',')[1]);
+      var bytes = new Uint8Array(dados.length);
+      for (var n = 0; n < dados.length; n++) bytes[n] = dados.charCodeAt(n);
+      return new File([bytes], 'pedido-mapra.jpg', { type: 'image/jpeg' });
+    } catch (e) { return null; }
   }
 
   /* ---------- fichas das peças personalizadas: imagem com as vistas e as medidas, guardada pelo personalizador (personalizador/ficha.mjs) ---------- */
@@ -339,12 +458,19 @@
         a.appendChild(linha('', 'Ficha · toque para ampliar'));
       }
     });
-    janela.querySelector('[data-fichas]').hidden = !tem;
-    janela.querySelector('[data-dica-fichas]').hidden = !tem;
+    desenhaEtapa();
+    // quem volta do WhatsApp com o passo 2 por fazer encontra a janela aberta nele
+    if (tem && etapa() === 2 && !janela.open && !abriuSozinha) {
+      abriuSozinha = true;
+      if (janela.showModal) janela.showModal(); else janela.setAttribute('open', '');
+    }
   }
+  var abriuSozinha = false;
   // os arquivos que seguem na conversa: a ficha de cada peça e as logos originais, na ordem do pedido
   function arquivosDoPedido() {
     var arquivos = [];
+    var capa = desenhaCapa(le(), cliente());
+    if (capa) arquivos.push(capa);
     le().forEach(function (item, indice) {
       var f = item.id && fichas[item.id];
       if (!f) return;
@@ -603,9 +729,14 @@
       });
     });
 
-    janela.querySelector('[data-envia]').addEventListener('click', function (ev) {
-      if (!dadosCompletos(true)) ev.preventDefault();
+    var botaoEnvia = janela.querySelector('[data-envia]');
+    // no computador a conversa abre em outra aba, para o site continuar aqui com o passo 2
+    if (window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches) { botaoEnvia.target = '_blank'; }
+    botaoEnvia.addEventListener('click', function (ev) {
+      if (!dadosCompletos(true)) { ev.preventDefault(); return; }
+      if (temFichas()) setTimeout(function () { poeEtapa(2); }, 400);
     });
+    janela.querySelector('[data-reenviar]').addEventListener('click', function () { poeEtapa(1); });
 
     janela.querySelector('[data-fichas]').addEventListener('click', function () {
       var arquivos = arquivosDoPedido();
@@ -617,7 +748,7 @@
       };
       if (navigator.canShare && navigator.canShare({ files: arquivos })) {
         navigator.share({ files: arquivos, title: 'Pedido Mapra', text: 'Fichas e logos do meu pedido.' }).then(
-          function () { aviso.textContent = 'Pronto. Confira se o pedido em texto também foi enviado.'; },
+          function () { aviso.textContent = 'Pronto: texto e imagens enviados. A Mapra responde na conversa.'; },
           function (erro) { if (!erro || erro.name !== 'AbortError') baixaTudo(); }
         );
         return;

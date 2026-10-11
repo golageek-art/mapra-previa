@@ -632,6 +632,13 @@ section[id],:target{scroll-margin-top:calc(var(--fixo-h,120px) + 12px)}
 .pedido-ficha span{display:block;padding:5px 8px;border-top:1.5px solid var(--tinta);font-family:var(--mono);font-size:12px;letter-spacing:.04em;text-transform:uppercase}
 .pedido-dica{margin:0;font-size:14.5px;line-height:1.4;color:var(--giz)}
 .pedido-dica[hidden]{display:none}
+
+/* envio num caminho só: depois de mandar o texto, o lugar do botão passa a mostrar o passo 2 (as imagens) */
+.pedido-passo2{display:grid;gap:8px;padding:16px;background:var(--branco);border:2px solid var(--tinta)}
+.pedido-passo2[hidden]{display:none}
+.pedido-passo2 h3{font-family:var(--titulo);font-size:27px;font-weight:800;text-transform:uppercase;line-height:1}
+.pedido-passo2 p{font-size:15.5px;line-height:1.4}
+.pedido-volta{justify-self:start;min-height:40px;padding:6px 0;border:0;background:none;color:var(--giz);font:inherit;font-size:14.5px;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 /* Páginas de texto: contato (e, depois, as páginas novas). */
 .contatos{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-top:26px}
 .contatos div{background:var(--branco);border:1.5px solid var(--tinta);padding:16px;display:grid;gap:4px;align-content:start}

@@ -30,7 +30,7 @@ function quebra(contexto, texto, largura) {
 
 /**
  * Desenha a ficha e devolve um Blob JPEG.
- * dados: { peca, cor: { nome, hex }, total, tamanhos, aviso, cliente, vistas: [{ rotulo, src }], artes: [{ n, lugar, arquivo, medida, aspecto }] }
+ * dados: { peca, cor: { nome, hex }, total, grade: [{ nome, itens: [[tamanho, quantidade]] }], aviso, cliente, vistas: [{ rotulo, src }], artes: [{ n, lugar, arquivo, medida, aspecto }] }
  */
 export async function desenhaFicha(dados) {
   const vistas = await Promise.all(dados.vistas.map(async (vista) => ({ rotulo: vista.rotulo, imagem: await carrega(vista.src) })));
@@ -97,9 +97,28 @@ export async function desenhaFicha(dados) {
   }
   y += 16;
 
+  // tamanhos: um quadrinho por tamanho, com o tamanho em cima e a quantidade embaixo
   secao('Tamanhos');
-  paragrafo(dados.tamanhos || 'A definir.', 600);
-  y += 24;
+  if (!dados.grade || !dados.grade.length) paragrafo('A definir.', 600);
+  for (const grupo of dados.grade || []) {
+    c.fillStyle = GIZ; c.font = fonte(TEXTO, 23, 600); c.fillText(grupo.nome, MARGEM, y); y += 16;
+    const lw = 104, lh = 98, vao = 10;
+    let x = MARGEM;
+    for (const [tamanho, quantidade] of grupo.itens) {
+      if (x + lw > LARGURA - MARGEM) { x = MARGEM; y += lh + vao; }
+      c.fillStyle = '#eceee9'; c.fillRect(x, y, lw, 38);
+      c.fillStyle = '#ffffff'; c.fillRect(x, y + 38, lw, lh - 38);
+      c.strokeStyle = TINTA; c.lineWidth = 2; c.strokeRect(x, y, lw, lh);
+      c.beginPath(); c.moveTo(x, y + 38); c.lineTo(x + lw, y + 38); c.stroke();
+      c.textAlign = 'center'; c.fillStyle = TINTA;
+      c.font = fonte(TEXTO, 24, 700); c.fillText(String(tamanho), x + lw / 2, y + 28);
+      c.font = fonte(TITULO, 46); c.fillText(String(quantidade), x + lw / 2, y + 85);
+      c.textAlign = 'left';
+      x += lw + vao;
+    }
+    y += lh + 34;
+  }
+  y += 4;
 
   if (dados.aviso) { secao('Aviso do cliente'); paragrafo(dados.aviso); y += 24; }
 
