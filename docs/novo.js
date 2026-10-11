@@ -647,6 +647,17 @@
     new IntersectionObserver(function (entradas) { avisa(entradas[0].isIntersecting); }).observe(el);
   }
 
+  // botão de pausa: para a troca de cor da camiseta; apertar de novo retoma
+  var botaoPausa = document.querySelector('[data-pausa]');
+  function marcaPausa(sim) {
+    parado = sim;
+    if (!botaoPausa) return;
+    botaoPausa.setAttribute('aria-pressed', String(parado));
+    botaoPausa.setAttribute('aria-label', parado ? 'Continuar a troca de cor da camiseta' : 'Pausar a troca de cor da camiseta');
+    botaoPausa.querySelector('[data-pausa-sinal]').textContent = parado ? '>' : 'II';
+  }
+  if (botaoPausa) botaoPausa.addEventListener('click', function () { marcaPausa(!parado); });
+
   /* ---------- camiseta viva: a foto da camiseta neutra é tingida, uma cor da cartela de cada vez ---------- */
   var vivo = document.querySelector('[data-vivo]');
   if (vivo) {
@@ -655,17 +666,24 @@
     var filtro = vivo.querySelector('feColorMatrix');
     var nome = vivo.querySelector('[data-vivo-nome]');
     var ponto = vivo.querySelector('[data-vivo-ponto]');
+    var pontos = [].slice.call(vivo.querySelectorAll('[data-vivo-cor]'));
+    var links = [].slice.call(vivo.querySelectorAll('[data-vivo-link]'));
     var atual = cores.length ? cores[0].m.slice() : [];
     var indice = 0;
     var naTela = false;
+    var corrida = 0; // só a última troca pedida continua pintando
 
     function vai(k) {
-      var de = atual.slice(), para = cores[k].m, inicio = 0;
+      var de = atual.slice(), para = cores[k].m, inicio = 0, minha = ++corrida;
       nome.textContent = cores[k].n;
-      ponto.style.background = cores[k].h;
+      if (ponto) ponto.style.background = cores[k].h;
       vivo.classList.toggle('clara', !!cores[k].c);
+      pontos.forEach(function (botao, n) { botao.setAttribute('aria-pressed', String(n === k)); });
+      // o personalizador abre já na cor que está na tela
+      links.forEach(function (link) { link.setAttribute('href', link.getAttribute('href').split('?')[0] + '?cor=' + encodeURIComponent(cores[k].n)); });
       if (calmo) { atual = para.slice(); filtro.setAttribute('values', atual.join(' ')); return; } // troca de cor não é deslocamento: fica, só sem a transição
       function passo(agora) {
+        if (minha !== corrida) return;
         if (!inicio) inicio = agora;
         var p = Math.min(1, (agora - inicio) / 650);
         var suave = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
@@ -683,17 +701,10 @@
         indice = (indice + 1) % cores.length;
         vai(indice);
       }, calmo ? 3600 : 2600);
+      // tocar numa cor: a camiseta vai para ela e a troca sozinha para (a pessoa assumiu o controle)
+      pontos.forEach(function (botao, k) {
+        botao.addEventListener('click', function () { indice = k; vai(k); marcaPausa(true); });
+      });
     }
-  }
-
-  // botão de pausa: para a troca de cor da camiseta; apertar de novo retoma
-  var botaoPausa = document.querySelector('[data-pausa]');
-  if (botaoPausa) {
-    botaoPausa.addEventListener('click', function () {
-      parado = !parado;
-      botaoPausa.setAttribute('aria-pressed', String(parado));
-      botaoPausa.setAttribute('aria-label', parado ? 'Continuar a troca de cor da camiseta' : 'Pausar a troca de cor da camiseta');
-      botaoPausa.querySelector('[data-pausa-sinal]').textContent = parado ? '>' : 'II';
-    });
   }
 })();

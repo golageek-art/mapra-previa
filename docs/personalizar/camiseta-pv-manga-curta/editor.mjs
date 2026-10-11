@@ -225,7 +225,7 @@ function renderZones() {
   }
 }
 let justPanned = false;
-function requestArt(id) { uploadZone = id; zoneId = id; $('art-file').click(); }
+function requestArt(id) { uploadZone = id; zoneId = id; focusZone(id); $('art-file').click(); }
 function geometry(layer) { return layerGeometry(layer, view, sleeveSide); }
 function previewSource(layer) {
   return variants.get(variantKey(layer.art.dataUrl, modeOf(layer), tintOf(layer))) || layer.art.dataUrl;
@@ -402,8 +402,8 @@ function selectLayer(id) {
   selectedId = id; adjustingId = id; zoneId = layer.zoneId; if (isSleeve(zoneId)) sleeveSide = zoneId;
   // só troca de aba se a arte não está à vista (as mangas já aparecem na frente: ali a pessoa fica onde estava)
   if (!visibleZones(view, sleeveSide, chestMode(project)).some((zone) => zone.id === layer.zoneId)) view = viewFor(layer.zoneId);
-  renderStage(); renderLayerList(); renderLayerFields(); centerZoom();
-  focusArt(layer);
+  renderStage(); renderLayerList(); renderLayerFields();
+  if (!focusArt(layer)) centerZoom();
   revealArtMenu();
 }
 function chooseView(nextView) {
@@ -752,10 +752,17 @@ const zoomLevels = [1, 1.7, 2.6, 4];
 const MAX_ZOOM = zoomLevels[zoomLevels.length - 1];
 let zoom = 1;
 let pinching = false;
+// A foto cresce aos poucos (transição de largura). Posicionar uma vez só deixava a janela presa no canto de cima, à esquerda:
+// por isso o ponto escolhido é recolocado a cada quadro até a foto parar de crescer. Um toque ou arrasto da pessoa cancela.
+let placing = 0;
+function keepPlacing(place) {
+  const mine = ++placing, until = performance.now() + 340;
+  const step = () => { if (mine !== placing || pinching) return; place(); if (performance.now() < until) requestAnimationFrame(step); };
+  step();
+}
 function centerZoom() {
   const box = $('zoom-box');
-  const center = () => { box.scrollLeft = (box.scrollWidth - box.clientWidth) / 2; box.scrollTop = (box.scrollHeight - box.clientHeight) / 2; };
-  center(); requestAnimationFrame(center);
+  keepPlacing(() => { box.scrollLeft = (box.scrollWidth - box.clientWidth) / 2; box.scrollTop = (box.scrollHeight - box.clientHeight) / 2; });
 }
 // Aplica um zoom qualquer (de 1 a MAX_ZOOM). Os botões + e − pulam entre os níveis; o gesto de pinça e a rodinha do mouse usam valores contínuos.
 function applyZoom(value) {
@@ -765,16 +772,26 @@ function applyZoom(value) {
   $('zoom-out').disabled = zoom <= 1.01; $('zoom-in').disabled = zoom >= MAX_ZOOM - 0.01;
 }
 function setZoom(value) { applyZoom(value); centerZoom(); }
+// Põe um ponto da foto (em unidades da foto) no meio da janela; aproxima até `wanted` se a foto estiver mais longe que isso.
+function focusPoint(cx, cy, wanted) {
+  const frame = viewBoxFor(view, sleeveSide), box = $('zoom-box');
+  if (wanted > zoom + 0.05) applyZoom(wanted); // se a pessoa já aproximou mais, o zoom dela fica
+  const ax = (cx - frame.x) / frame.w, ay = (cy - frame.y) / frame.h;
+  keepPlacing(() => { box.scrollLeft = ax * box.scrollWidth - box.clientWidth / 2; box.scrollTop = ay * box.scrollHeight - box.clientHeight / 2; });
+}
 // Aproxima a foto até a arte ocupar cerca de um terço da largura e a põe no meio da janela.
 function focusArt(layer) {
-  if (!layer || !visibleLayers().includes(layer)) return;
-  const g = layerGeometry(layer, view, sleeveSide), frame = viewBoxFor(view, sleeveSide), box = $('zoom-box');
-  const wanted = Math.min(3.2, Math.max(1, (frame.w * 0.34) / Math.max(g.w, g.h * 0.8)));
-  if (wanted <= zoom + 0.05) return; // já está perto o bastante (ou a pessoa aproximou mais)
-  applyZoom(wanted);
-  const ax = (g.x + g.w / 2 - frame.x) / frame.w, ay = (g.y + g.h / 2 - frame.y) / frame.h;
-  const place = () => { box.scrollLeft = ax * box.scrollWidth - box.clientWidth / 2; box.scrollTop = ay * box.scrollHeight - box.clientHeight / 2; };
-  place(); requestAnimationFrame(place);
+  if (!layer || !visibleLayers().includes(layer)) return false;
+  const g = layerGeometry(layer, view, sleeveSide), frame = viewBoxFor(view, sleeveSide);
+  focusPoint(g.x + g.w / 2, g.y + g.h / 2, Math.min(3.2, Math.max(1, (frame.w * 0.34) / Math.max(g.w, g.h * 0.8))));
+  return true;
+}
+// Ao tocar no "+" de um lugar, a foto já vai para ele (antes mesmo de a pessoa escolher a logo).
+function focusZone(id) {
+  const zone = visibleZones(view, sleeveSide, chestMode(project)).find((entry) => entry.id === id);
+  if (!zone) return;
+  const area = displayZone(zone, view, sleeveSide), frame = viewBoxFor(view, sleeveSide);
+  focusPoint(area.x + area.width / 2, area.y + area.height / 2, Math.min(2.6, Math.max(1, (frame.w * 0.42) / Math.max(area.width, area.height))));
 }
 const nextZoom = () => zoomLevels.find((level) => level > zoom + 0.02) ?? MAX_ZOOM;
 const previousZoom = () => [...zoomLevels].reverse().find((level) => level < zoom - 0.02) ?? 1;
@@ -788,7 +805,9 @@ const previousZoom = () => [...zoomLevels].reverse().find((level) => level < zoo
     if (event.button !== 0 || event.pointerType === 'touch' || zoom <= 1.01) return;
     if (event.target.closest('[data-layer-id], [data-handle]')) return;
     pan = { id: event.pointerId, x: event.clientX, y: event.clientY, left: box.scrollLeft, top: box.scrollTop, moving: false };
+    placing += 1;
   });
+  box.addEventListener('touchmove', () => { placing += 1; }, { passive: true });
   box.addEventListener('pointermove', (event) => {
     if (!pan || event.pointerId !== pan.id) return;
     const dx = event.clientX - pan.x, dy = event.clientY - pan.y;
@@ -1017,6 +1036,10 @@ try {
     await checkArtImages(next); project = next;
   }
 } catch { status('O rascunho anterior não pôde ser recuperado. Você pode abrir um projeto salvo.'); }
+// quem vem da capa com uma cor escolhida (…?cor=Vermelho) começa nela
+const wantedColor = new URLSearchParams(location.search).get('cor');
+const linkedColor = wantedColor && catalog.paleta.find(([name]) => name.toLowerCase() === wantedColor.trim().toLowerCase());
+if (linkedColor) project.color = { name: linkedColor[0], hex: linkedColor[1] };
 renderAll();
 try {
   const saved = JSON.parse(localStorage.getItem(ORDER_KEY));

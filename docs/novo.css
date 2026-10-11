@@ -388,8 +388,6 @@ section[id],:target{scroll-margin-top:calc(var(--fixo-h,120px) + 12px)}
 .forte-pecas a{display:inline-flex;align-items:center;gap:7px;min-height:40px;padding:6px 13px 6px 9px;border:1.5px solid rgba(255,255,255,.72);border-radius:999px;background:rgba(12,12,13,.45);color:#fff;font-size:15px;font-weight:650;line-height:1.1;text-decoration:none;transition:background-color .15s ease,color .15s ease,border-color .15s ease}
 .forte-pecas a:hover,.forte-pecas a:focus-visible{background:var(--amarelo);border-color:var(--amarelo);color:var(--preto)}
 .forte-pecas .ico{flex:none;width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-/* a camiseta que troca de cor fica sobre o canto da foto */
-.capa-forte .capa-vivo-caixa{position:absolute;left:auto;right:20px;bottom:26px;margin:0;width:min(390px,34%)}
 .forte-numeros{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid #2c2e31}
 .forte-numeros li{display:grid;gap:3px;align-content:start;padding:20px 18px 22px 0}
 .forte-numeros li + li{padding-left:18px;border-left:1px solid #2c2e31}
@@ -406,7 +404,7 @@ section[id],:target{scroll-margin-top:calc(var(--fixo-h,120px) + 12px)}
   .forte-texto{max-width:none;gap:16px;margin-top:-68px;padding-block:0 24px}
   /* a nota do Google fica sobre o canto da foto */
   .capa-forte .capa-selo{position:absolute;top:12px;left:20px;z-index:2;box-shadow:0 2px 10px rgba(12,12,13,.25)}
-  .capa-forte h1{font-size:clamp(36px,11.4vw,58px);text-shadow:0 2px 18px rgba(12,12,13,.55)}
+  .capa-forte h1{font-size:clamp(34px,10.9vw,58px);text-shadow:0 2px 18px rgba(12,12,13,.55)}
   .capa-forte .acoes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%}
   .capa-forte .acoes .btn{padding:14px 8px;font-size:15.5px;gap:7px}
   /* tipos de peça: grade de 4 por 2, ícone em cima e nome embaixo */
@@ -416,19 +414,6 @@ section[id],:target{scroll-margin-top:calc(var(--fixo-h,120px) + 12px)}
   .forte-pecas a .ico{width:30px;height:30px;color:var(--amarelo)}
   .forte-pecas a:hover .ico,.forte-pecas a:focus-visible .ico{color:inherit}
   .pc-resto{display:none}
-  /* a camiseta que troca de cor: cartão escuro, com a peça sobre um fundo claro para toda cor aparecer */
-  .capa-forte .capa-vivo-caixa{position:relative;right:auto;bottom:auto;width:100%;margin:0}
-  .capa-forte .capa-vivo{padding:8px 12px 8px 8px;background:#1b1c1e;border:1px solid rgba(255,255,255,.24);border-radius:14px;box-shadow:none;color:#fff}
-  .capa-forte .capa-vivo:hover,.capa-forte .capa-vivo:focus-visible{transform:none;box-shadow:none;border-color:var(--amarelo)}
-  .capa-forte .vivo-peca{background:#e9ebe6;border-radius:9px}
-  .capa-forte .capa-vivo .vivo-logo{color:#fff}
-  .capa-forte .capa-vivo.clara .vivo-logo{color:var(--tinta)}
-  .capa-forte .capa-vivo .rot{color:var(--amarelo)}
-  .capa-forte .vivo-tx b{font-size:23px;text-wrap:balance}
-  .capa-forte .vivo-cor{color:rgba(255,255,255,.82)}
-  .capa-forte .vivo-cor i{outline-color:rgba(255,255,255,.75)}
-  .capa-forte .vivo-seta{outline:0;color:var(--preto)}
-  .capa-forte .vivo-pausa{right:-6px;top:-12px}
   .forte-numeros{grid-template-columns:repeat(2,minmax(0,1fr))}
   .forte-numeros li{padding:14px 12px 16px 0}
   .forte-numeros li + li{padding-left:12px}
@@ -443,6 +428,40 @@ section[id],:target{scroll-margin-top:calc(var(--fixo-h,120px) + 12px)}
 @media (max-width:380px){.forte-pecas nav{gap:6px}.forte-pecas a{font-size:13px}.forte-pecas a .ico{width:28px;height:28px}}
 @media (max-width:340px){.forte-pecas a{font-size:12px}}
 @media (prefers-reduced-motion: reduce){.forte-pecas a{transition:none}}
+
+/* ===== faixa "Teste na hora": a camiseta que troca de cor saiu de cima do topo e ganhou um lugar só dela ===== */
+.capa-teste{background:var(--amarelo);color:var(--tinta);padding-block:clamp(40px,6vw,80px)}
+.capa-teste .caixa{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,430px);grid-template-areas:"cab palco" "acoes palco";column-gap:clamp(28px,6vw,88px);row-gap:24px;align-items:center}
+.teste-cab{grid-area:cab;align-self:end;display:grid;gap:14px;justify-items:start}
+.teste-acoes{grid-area:acoes;align-self:start;display:grid;gap:12px;justify-items:start}
+.capa-teste .rot{color:var(--tinta)}
+.capa-teste h2{font-size:clamp(38px,5.4vw,70px)}
+.capa-teste h2 em{font-style:normal;display:block;width:fit-content;margin-top:.06em;padding:.05em .16em 0;background:var(--preto);color:var(--amarelo)}
+.capa-teste .sub{margin:0;max-width:36ch;font-size:clamp(17.5px,1.7vw,20px)}
+/* o palco: fundo claro para toda cor de camiseta aparecer, inclusive a branca e a amarela */
+.teste-palco{grid-area:palco;position:relative;background:radial-gradient(circle at 50% 44%,#fff 0%,#fff 36%,#e4e6e1 100%);border:1.5px solid var(--tinta);box-shadow:8px 8px 0 var(--tinta)}
+.teste-peca{display:block;padding:16px 16px 42px}
+.teste-peca svg{display:block;width:100%;height:auto}
+.teste-nome{position:absolute;left:14px;bottom:11px;margin:0;display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:13.5px;font-weight:500;letter-spacing:.05em;text-transform:uppercase}
+.teste-nome i{flex:none;width:14px;height:14px;border-radius:50%;outline:1.5px solid var(--tinta)}
+.capa-teste .vivo-pausa{right:10px;top:10px;width:40px;height:40px}
+.capa-teste.clara .vivo-logo{color:var(--tinta)}
+.teste-cores{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:9px;width:min(100%,410px)}
+.teste-cores button{aspect-ratio:1;padding:0;border:1.5px solid var(--tinta);border-radius:50%;background:var(--c);cursor:pointer;transition:transform .15s ease}
+.teste-cores button:hover{transform:scale(1.08)}
+.teste-cores button[aria-pressed="true"]{box-shadow:0 0 0 3px var(--amarelo),0 0 0 5.5px var(--tinta)}
+.teste-nota{margin:0;font-size:15.5px}
+.capa-teste .btn{margin-top:6px;padding:16px 24px;font-size:17.5px}
+@media (max-width:760px){
+  .capa-teste .caixa{grid-template-columns:minmax(0,1fr);grid-template-areas:"cab" "palco" "acoes";row-gap:22px}
+  .teste-palco{justify-self:center;width:min(100%,380px);box-shadow:6px 6px 0 var(--tinta)}
+  .teste-cores{gap:7px}
+}
+@media (max-width:520px){
+  .teste-acoes{justify-items:stretch}
+  .capa-teste .btn{width:100%}
+}
+@media (prefers-reduced-motion: reduce){.teste-cores button{transition:none}}
 /* Catálogo: grade de cartões, filtros por tipo de peça. */
 .grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px}
 @media (max-width:560px){.grade{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
