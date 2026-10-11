@@ -1,0 +1,193 @@
+{
+  "modelagens": [
+    {
+      "nome": "Tradicional",
+      "tamanhos": [
+        "PP",
+        "P",
+        "M",
+        "G",
+        "GG",
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5"
+      ]
+    },
+    {
+      "nome": "Feminina",
+      "tamanhos": [
+        "PP",
+        "P",
+        "M",
+        "G",
+        "GG",
+        "G1"
+      ]
+    },
+    {
+      "nome": "Babylook",
+      "tamanhos": [
+        "PP",
+        "P",
+        "M",
+        "G",
+        "GG",
+        "G1"
+      ]
+    },
+    {
+      "nome": "Infantil",
+      "tamanhos": [
+        "1",
+        "2",
+        "4",
+        "6",
+        "8",
+        "10",
+        "12",
+        "14",
+        "16"
+      ]
+    },
+    {
+      "nome": "Masculino Slim",
+      "tamanhos": [
+        "PP",
+        "P",
+        "M",
+        "G",
+        "GG"
+      ]
+    }
+  ],
+  "slug": "camiseta-pv-manga-curta",
+  "nome": "Camiseta Malha PV Manga Curta Gola Redonda",
+  "paleta": [
+    [
+      "Branco",
+      "#ffffff"
+    ],
+    [
+      "Caqui",
+      "#b9a37e"
+    ],
+    [
+      "Rosa BB",
+      "#f4c6d0"
+    ],
+    [
+      "Azul BB",
+      "#bcd9ee"
+    ],
+    [
+      "Cinza Claro",
+      "#cfd2d4"
+    ],
+    [
+      "Cinza Médio",
+      "#9a9ea3"
+    ],
+    [
+      "Amarelo Canário",
+      "#ffe94d"
+    ],
+    [
+      "Pistache",
+      "#b9d989"
+    ],
+    [
+      "Verde Oliva",
+      "#6b7140"
+    ],
+    [
+      "Azul Celeste",
+      "#6fb7e6"
+    ],
+    [
+      "Amarelo Ouro",
+      "#f6b61c"
+    ],
+    [
+      "Laranja",
+      "#f0701e"
+    ],
+    [
+      "Vermelho",
+      "#d21f26"
+    ],
+    [
+      "Maçã",
+      "#b3141f"
+    ],
+    [
+      "Bordô",
+      "#6e1423"
+    ],
+    [
+      "Pink",
+      "#e6337f"
+    ],
+    [
+      "Roxo",
+      "#5b2a86"
+    ],
+    [
+      "Limão",
+      "#c4e03a"
+    ],
+    [
+      "Verde Palmeira",
+      "#0d7a43"
+    ],
+    [
+      "Verde Musgo",
+      "#3e5a3a"
+    ],
+    [
+      "Azul Petróleo",
+      "#0f4c5c"
+    ],
+    [
+      "Azul Marinho",
+      "#1b2a4e"
+    ],
+    [
+      "Azul Marinho-Noite",
+      "#111a30"
+    ],
+    [
+      "Chumbo",
+      "#4a4d52"
+    ],
+    [
+      "Marrom",
+      "#5a3b28"
+    ],
+    [
+      "Preto",
+      "#111111"
+    ],
+    [
+      "Mescla Grafite",
+      "#5b5d61"
+    ],
+    [
+      "Azul Turquesa",
+      "#1ca7c4"
+    ],
+    [
+      "Azul Royal",
+      "#1f4fc2"
+    ],
+    [
+      "Jade",
+      "#1aa58a"
+    ],
+    [
+      "Verde Bandeira",
+      "#0a8f3c"
+    ]
+  ]
+}
