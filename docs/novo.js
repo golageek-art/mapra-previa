@@ -256,7 +256,9 @@
       tam: tam,
       artes: Array.isArray(i.artes) ? i.artes.slice(0, 20).map(arte).filter(Boolean) : [],
       tecnica: texto(i.tecnica, 60),
-      obs: texto(i.obs, 2000)
+      obs: texto(i.obs, 2000),
+      id: texto(i.id, 60),
+      ficha: i.ficha === true
     };
   }
   function texto(v, limite) { return typeof v === 'string' ? v.slice(0, limite) : ''; }
@@ -280,7 +282,87 @@
   function grava(itens) {
     memoria = itens;
     try { localStorage.setItem(CHAVE, JSON.stringify(itens)); } catch (e) { /* idem */ }
+    apagaFichasFora(itens.map(function (i) { return i.id; }));
     desenha();
+  }
+
+  /* ---------- fichas das peças personalizadas: imagem com as vistas e as medidas, guardada pelo personalizador (personalizador/ficha.mjs) ---------- */
+  var BANCO = 'mapra-pedido', LOJA = 'fichas';
+  var fichas = {};   // número da peça -> { ficha: imagem, logos: [{ nome, blob }], url: endereço da imagem para mostrar }
+  function banco(modo, faz) {
+    return new Promise(function (ok, erro) {
+      if (!window.indexedDB) { erro(new Error('sem banco')); return; }
+      var pedido = indexedDB.open(BANCO, 1);
+      pedido.onupgradeneeded = function () { if (!pedido.result.objectStoreNames.contains(LOJA)) pedido.result.createObjectStore(LOJA, { keyPath: 'id' }); };
+      pedido.onerror = function () { erro(pedido.error); };
+      pedido.onsuccess = function () {
+        var db = pedido.result, troca = db.transaction(LOJA, modo), saida = faz(troca.objectStore(LOJA));
+        troca.oncomplete = function () { db.close(); ok(saida && saida.result); };
+        troca.onerror = troca.onabort = function () { db.close(); erro(troca.error); };
+      };
+    });
+  }
+  function apagaFichasFora(ids) {
+    Object.keys(fichas).forEach(function (id) {
+      if (ids.indexOf(id) < 0) { URL.revokeObjectURL(fichas[id].url); delete fichas[id]; }
+    });
+    banco('readonly', function (loja) { return loja.getAllKeys(); }).then(function (chaves) {
+      var sobra = (chaves || []).filter(function (id) { return ids.indexOf(id) < 0; });
+      if (sobra.length) return banco('readwrite', function (loja) { sobra.forEach(function (id) { loja.delete(id); }); });
+    }).catch(function () { /* sem banco neste aparelho: não há ficha para apagar */ });
+  }
+  // lê do aparelho as fichas das peças do pedido e mostra a miniatura em cada uma
+  function carregaFichas() {
+    if (!janela) return;
+    var itens = le().filter(function (i) { return i.ficha && i.id; });
+    if (!itens.length || itens.every(function (i) { return fichas[i.id]; })) { mostraFichas(); return; }
+    banco('readonly', function (loja) { return loja.getAll(); }).then(function (registros) {
+      (registros || []).forEach(function (r) {
+        if (!fichas[r.id] && r.ficha) fichas[r.id] = { ficha: r.ficha, logos: r.logos || [], url: URL.createObjectURL(r.ficha) };
+      });
+      mostraFichas();
+    }).catch(mostraFichas);
+  }
+  function mostraFichas() {
+    var tem = false;
+    janela.querySelectorAll('[data-ficha-de]').forEach(function (a) {
+      var f = fichas[a.dataset.fichaDe];
+      a.hidden = !f;
+      if (!f) return;
+      tem = true;
+      a.href = f.url;
+      if (!a.firstChild) {
+        var img = document.createElement('img');
+        img.alt = 'Ficha da peça, com as artes e as medidas';
+        img.src = f.url;
+        a.appendChild(img);
+        a.appendChild(linha('', 'Ficha · toque para ampliar'));
+      }
+    });
+    janela.querySelector('[data-fichas]').hidden = !tem;
+    janela.querySelector('[data-dica-fichas]').hidden = !tem;
+  }
+  // os arquivos que seguem na conversa: a ficha de cada peça e as logos originais, na ordem do pedido
+  function arquivosDoPedido() {
+    var arquivos = [];
+    le().forEach(function (item, indice) {
+      var f = item.id && fichas[item.id];
+      if (!f) return;
+      var n = indice + 1;
+      arquivos.push(new File([f.ficha], 'ficha-' + n + '-' + item.slug + '.jpg', { type: 'image/jpeg' }));
+      f.logos.forEach(function (logo) { arquivos.push(new File([logo.blob], 'peca-' + n + '-logo-' + logo.nome, { type: logo.blob.type || 'image/png' })); });
+    });
+    return arquivos;
+  }
+  function baixa(arquivos) {
+    arquivos.forEach(function (arquivo, indice) {
+      setTimeout(function () {
+        var a = document.createElement('a'), url = URL.createObjectURL(arquivo);
+        a.href = url; a.download = arquivo.name;
+        janela.appendChild(a); a.click(); janela.removeChild(a);
+        setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+      }, indice * 350);
+    });
   }
 
   function leCliente() {
@@ -331,7 +413,8 @@
       if (i.obs) linhas.push('  Aviso: ' + i.obs);
     });
     linhas.push('', 'Total: ' + pecas(total) + '.');
-    if (comMarca) linhas.push('Vou enviar as logos aqui na conversa.');
+    if (itens.some(function (i) { return i.ficha; })) linhas.push('Vou enviar aqui na conversa a ficha de cada peça (imagem com as medidas) e as logos.');
+    else if (comMarca) linhas.push('Vou enviar as logos aqui na conversa.');
     return linhas.join('\n');
   }
 
@@ -383,6 +466,12 @@
       if (t) n.appendChild(linha('c', 'Tamanhos: ' + t));
       if (item.tecnica) n.appendChild(linha('c', 'Aplicação: ' + item.tecnica));
       if (item.qtd < MINIMO) n.appendChild(linha('c falta', 'Mínimo de ' + MINIMO + ' por peça: ' + faltam(item.qtd) + '.'));
+      if (item.ficha && item.id) {
+        var ficha = document.createElement('a');
+        ficha.className = 'pedido-ficha'; ficha.target = '_blank'; ficha.rel = 'noopener'; ficha.hidden = true;
+        ficha.setAttribute('data-ficha-de', item.id);
+        n.appendChild(ficha);
+      }
       var tira = document.createElement('button');
       tira.type = 'button';
       tira.textContent = 'Tirar';
@@ -412,6 +501,7 @@
     if (avisoCopia) avisoCopia.textContent = '';
     perguntaEsvaziar(false);
     atualizaLink();
+    carregaFichas();
   }
 
   function perguntaEsvaziar(mostra) {
@@ -517,6 +607,24 @@
       if (!dadosCompletos(true)) ev.preventDefault();
     });
 
+    janela.querySelector('[data-fichas]').addEventListener('click', function () {
+      var arquivos = arquivosDoPedido();
+      var aviso = janela.querySelector('[data-fichas-aviso]');
+      if (!arquivos.length) return;
+      var baixaTudo = function () {
+        baixa(arquivos);
+        aviso.textContent = 'As imagens foram salvas neste aparelho. Anexe na conversa do WhatsApp com a Mapra.';
+      };
+      if (navigator.canShare && navigator.canShare({ files: arquivos })) {
+        navigator.share({ files: arquivos, title: 'Pedido Mapra', text: 'Fichas e logos do meu pedido.' }).then(
+          function () { aviso.textContent = 'Pronto. Confira se o pedido em texto também foi enviado.'; },
+          function (erro) { if (!erro || erro.name !== 'AbortError') baixaTudo(); }
+        );
+        return;
+      }
+      baixaTudo();
+    });
+
     janela.querySelector('[data-copia]').addEventListener('click', function () {
       var itens = le();
       if (!itens.length) return;
@@ -605,16 +713,33 @@
     var conta = document.querySelector('[data-filtro-conta]');
     if (conta) {
       conta.textContent = linha ? 'Mostrando ' + visiveis + (visiveis === 1 ? ' peça' : ' peças') + ' de ' + cartoes.length + ': ' + botao.textContent.trim() : 'Mostrando as ' + cartoes.length + ' peças';
-      if (rolar && conta.getBoundingClientRect().top > window.innerHeight * 0.55) conta.scrollIntoView({ behavior: 'auto', block: 'start' });
+      if (rolar && conta.getBoundingClientRect().top > window.innerHeight * 0.55) resultado.scrollIntoView({ behavior: 'auto', block: 'start' });
     }
+    if (volta) volta.hidden = !linha;
   }
+  var resultado = document.querySelector('[data-filtro-linha]');
+  var volta = document.querySelector('[data-filtro-volta]');
+  // "Trocar o tipo": sobe até os botões de tipo de peça
+  if (volta) volta.addEventListener('click', function () { document.querySelector('.filtros').scrollIntoView({ behavior: 'auto', block: 'start' }); });
   filtros.forEach(function (f) {
     f.addEventListener('click', function () {
       filtra(f.dataset.linha, true);
       if (history.replaceState) history.replaceState(null, '', f.dataset.linha ? '#' + f.dataset.linha : location.pathname);
     });
   });
-  if (filtros.length && location.hash) filtra(location.hash.slice(1));
+  // Quem chega já com o tipo escolhido (vem da capa, por "O que a Mapra faz") cai direto nas fotos desse tipo,
+  // sem passar de novo pelos botões que acabou de usar. Quem chega pelo "Catálogo" vê a página do começo.
+  if (filtros.length && location.hash) {
+    var pedida = location.hash.slice(1);
+    filtra(pedida);
+    if (resultado && pedida && filtros.some(function (f) { return f.dataset.linha === pedida; })) {
+      var mexeu = false;
+      ['touchstart', 'wheel', 'keydown'].forEach(function (tipo) { window.addEventListener(tipo, function () { mexeu = true; }, { once: true, passive: true }); });
+      var leva = function () { if (!mexeu) resultado.scrollIntoView({ behavior: 'auto', block: 'start' }); };
+      leva();
+      window.addEventListener('load', leva); // de novo quando as fotos de cima terminam de carregar e a página assenta
+    }
+  }
 })();
 // Mapra, visual novo: galeria de fotos da página de produto.
 (function () {

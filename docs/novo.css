@@ -490,7 +490,12 @@ section[id],:target{scroll-margin-top:calc(var(--fixo-h,120px) + 12px)}
 }
 
 /* depois de filtrar: quantas peças apareceram */
-.filtro-conta{margin:-10px 0 18px;font-family:var(--mono);font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--giz);scroll-margin-top:calc(var(--fixo-h,120px) + 12px)}
+/* linha do resultado: quantas peças apareceram e, com um tipo escolhido, o atalho para trocar de tipo */
+.filtro-linha{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 14px;margin:-10px 0 18px;scroll-margin-top:calc(var(--fixo-h,120px) + 10px)}
+.filtro-conta{margin:0;font-family:var(--mono);font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--giz)}
+.filtro-volta{min-height:40px;padding:6px 2px;border:0;background:none;color:var(--tinta);font:inherit;font-size:15.5px;font-weight:650;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.filtro-volta[hidden]{display:none}
+.filtros{scroll-margin-top:calc(var(--fixo-h,120px) + 12px)}
 /* Página de produto: galeria, bloco "Monte o pedido desta peça" (cor, marca, tamanhos e quantidade) e informações. */
 .trilha{font-size:14.5px;color:var(--giz);padding-block:18px 0}
 .trilha a{text-decoration:none;border-bottom:1px solid var(--linha)}
@@ -608,6 +613,14 @@ section[id],:target{scroll-margin-top:calc(var(--fixo-h,120px) + 12px)}
 .barra-zap{display:grid;place-items:center;width:46px;height:46px;border-radius:50%;background:var(--zap);color:var(--zap-tinta);flex:none}
 .barra-zap svg{width:25px;height:25px}
 @media (max-width:760px){.barra-zap{width:42px;height:42px}.barra-pedido p{min-width:0;line-height:1.2}}
+
+/* ficha da peça personalizada: miniatura dentro do item (abre inteira ao tocar) e o botão que manda as fichas e as logos */
+.pedido-ficha{display:block;margin-top:8px;width:min(100%,240px);border:1.5px solid var(--tinta);background:#fff;color:var(--tinta);text-decoration:none}
+.pedido-ficha[hidden]{display:none}
+.pedido-ficha img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;object-position:top}
+.pedido-ficha span{display:block;padding:5px 8px;border-top:1.5px solid var(--tinta);font-family:var(--mono);font-size:12px;letter-spacing:.04em;text-transform:uppercase}
+.pedido-dica{margin:0;font-size:14.5px;line-height:1.4;color:var(--giz)}
+.pedido-dica[hidden]{display:none}
 /* Páginas de texto: contato (e, depois, as páginas novas). */
 .contatos{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-top:26px}
 .contatos div{background:var(--branco);border:1.5px solid var(--tinta);padding:16px;display:grid;gap:4px;align-content:start}

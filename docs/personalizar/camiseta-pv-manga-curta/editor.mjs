@@ -1,5 +1,6 @@
 import { ZONES, fitLayer, moveLayer, quantityTotal, validateProject, importProject, activeLayers, chestMode } from './core.mjs';
 import { removeSolidBackground, tintArt } from './fundo.mjs';
+import { desenhaFicha, guardaFicha } from './ficha.mjs';
 import { isSleeve, viewFor, displayZone, visibleZones, geometry as layerGeometry, dyeMatrix, fabricAngle, viewBoxFor } from './presentation.mjs';
 
 const $ = (id) => document.getElementById(id);
@@ -265,6 +266,11 @@ function removeLayer(id) {
   if (adjustingId === id) adjustingId = null;
   renderZones(); renderLayers(); renderLayerList(); renderLayerFields(); changed(); status('Aplicação removida.');
   renderChest();
+  // O cartão da arte some e a página encolhe: sem isto a tela ia parar lá embaixo, nos tamanhos.
+  // Volta a camiseta inteira e deixa a etapa 2 ("Ponha as suas artes") à vista, logo abaixo da foto.
+  setZoom(1);
+  const step = document.querySelector('[data-step="2"]'), top = step ? step.getBoundingClientRect().top : 0;
+  if (step && (top < stickyBottom() - 1 || top > innerHeight * 0.6)) scrollToSection(2);
 }
 function renderLayerList() {
   const keepScroll = scrollY;
@@ -924,11 +930,41 @@ function orderItem(current) {
     obs: current.notes || '',
   };
 }
-function addToOrder(current) {
+function addToOrder(current, id, ficha) {
   let items = [];
   try { const saved = JSON.parse(localStorage.getItem(ORDER_KEY)); if (Array.isArray(saved)) items = saved; } catch { /* pedido guardado ilegível: começa outro */ }
-  items.push(orderItem(current));
+  items.push({ ...orderItem(current), id, ficha });
   localStorage.setItem(ORDER_KEY, JSON.stringify(items));
+}
+// As vistas que entram na conferência e na ficha: a frente sempre; costas e mangas só se tiverem arte.
+function viewsFor(arts) {
+  const wanted = [['front', 'Frente', 'manga-esquerda']];
+  if (arts.some((layer) => layer.view === 'back')) wanted.push(['back', 'Costas', 'manga-esquerda']);
+  if (arts.some((layer) => layer.zoneId === 'manga-esquerda')) wanted.push(['sleeve', 'Manga esquerda', 'manga-esquerda']);
+  if (arts.some((layer) => layer.zoneId === 'manga-direita')) wanted.push(['sleeve', 'Manga direita', 'manga-direita']);
+  return wanted;
+}
+// A ficha da peça (imagem com as vistas, as medidas e os tamanhos) e as logos originais ficam guardadas no aparelho,
+// para o cliente mandar na conversa junto com o pedido. É um extra: se não der para fazer, o pedido em texto segue igual.
+async function prepareFicha(id, current) {
+  const arts = activeLayers(current);
+  if (!arts.length) return false; // camiseta lisa: o texto já diz tudo
+  try {
+    status('Preparando a ficha da peça…');
+    await basesReady;
+    const vistas = [];
+    for (const [whichView, label, side] of viewsFor(arts)) vistas.push({ rotulo: label, src: await previewImage(whichView, current, side) });
+    let cliente = '';
+    try { const saved = JSON.parse(localStorage.getItem('mapra-cliente')) || {}; cliente = [saved.empresa, saved.nome].filter(Boolean).join(' · '); } catch { /* sem dados ainda */ }
+    const ficha = await desenhaFicha({
+      peca: current.product.name, cor: { nome: current.color.name, hex: current.color.hex },
+      total: quantityTotal(current.quantities), tamanhos: groupedSizes(current.quantities), aviso: current.notes, cliente, vistas,
+      artes: arts.map((layer, index) => ({ n: index + 1, lugar: zoneById(layer.zoneId).label, medida: cm(layer.widthCm) + ' × ' + cm(layer.heightCm) + ' cm', arquivo: layer.art.name, aspecto: artLook(layer) })),
+    });
+    const logos = arts.map((layer, index) => ({ nome: (index + 1) + '-' + layer.art.name, blob: dataUrlToFile(layer.art.dataUrl, layer.art.name, layer.art.mime) }));
+    await guardaFicha({ id, nome: current.product.name, ficha, logos });
+    return true;
+  } catch { return false; }
 }
 // Depois de entrar no pedido, o configurador fica limpo para a próxima peça (a cor continua).
 function startNewPiece() {
@@ -957,12 +993,17 @@ function validForOrder(checkMinimum = true) {
   }
   return current;
 }
+let addingToOrder = false;
 for (const link of document.querySelectorAll('[data-add-order]')) {
-  link.addEventListener('click', (event) => {
+  link.addEventListener('click', async (event) => {
     event.preventDefault();
+    if (addingToOrder) return; // um toque só: a ficha leva um instante para ficar pronta
     const current = validForOrder(); if (!current) return;
-    try { addToOrder(current); }
-    catch { status('Não foi possível guardar o pedido neste aparelho. Saia do modo anônimo ou libere espaço e tente de novo.', true); return; }
+    addingToOrder = true;
+    const id = 'peca-' + newId();
+    const ficha = await prepareFicha(id, current);
+    try { addToOrder(current, id, ficha); }
+    catch { addingToOrder = false; status('Não foi possível guardar o pedido neste aparelho. Saia do modo anônimo ou libere espaço e tente de novo.', true); return; }
     if (review.open) review.close();
     startNewPiece();
     location.href = link.href;
@@ -997,12 +1038,8 @@ async function openReview() {
   review.querySelector('.review-body').scrollTop = 0;
   try {
     await basesReady;
-    const wanted = [['front', 'Frente', 'manga-esquerda']];
-    if (arts.some((layer) => layer.view === 'back')) wanted.push(['back', 'Costas', 'manga-esquerda']);
-    if (arts.some((layer) => layer.zoneId === 'manga-esquerda')) wanted.push(['sleeve', 'Manga esquerda', 'manga-esquerda']);
-    if (arts.some((layer) => layer.zoneId === 'manga-direita')) wanted.push(['sleeve', 'Manga direita', 'manga-direita']);
     const shots = [];
-    for (const [whichView, label, side] of wanted) {
+    for (const [whichView, label, side] of viewsFor(arts)) {
       const src = await previewImage(whichView, current, side);
       shots.push({ label, src });
       const figure = document.createElement('figure');
