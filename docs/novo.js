@@ -236,7 +236,7 @@
   var CHAVE = 'mapra-pedido';
   var CHAVE_CLIENTE = 'mapra-cliente';
   var memoria = [];
-  var memoriaCliente = { nome: '', empresa: '', telefone: '' };
+  var memoriaCliente = { nome: '', empresa: '', telefone: '', cep: '' };
 
   // aceita só o que tem a forma de um item; pedidos guardados por versões antigas (sem marca nem tamanhos) continuam valendo
   function normaliza(i) {
@@ -338,7 +338,7 @@
       c.textAlign = 'left';
       var y = 132 + 54;
       // quem pede
-      [['Empresa', cli.empresa], ['Nome', cli.nome], ['Telefone', cli.telefone]].forEach(function (par) {
+      [['Empresa', cli.empresa], ['Nome', cli.nome], ['Telefone', cli.telefone], ['CEP', cli.cep]].forEach(function (par) {
         if (!par[1]) return;
         c.fillStyle = '#4a4d51'; c.font = corpo(22, 600); c.fillText(par[0].toUpperCase(), M, y);
         c.fillStyle = '#17181a'; c.font = corpo(30, 700); c.fillText(par[1], M + 170, y + 2);
@@ -494,7 +494,7 @@
   function leCliente() {
     try {
       var v = JSON.parse(localStorage.getItem(CHAVE_CLIENTE));
-      if (v && typeof v === 'object') return { nome: String(v.nome || ''), empresa: String(v.empresa || ''), telefone: String(v.telefone || '') };
+      if (v && typeof v === 'object') return { nome: String(v.nome || ''), empresa: String(v.empresa || ''), telefone: String(v.telefone || ''), cep: String(v.cep || '') };
     } catch (e) { /* idem */ }
     return memoriaCliente;
   }
@@ -520,6 +520,7 @@
     if (cliente.empresa) linhas.push('Empresa: ' + cliente.empresa);
     if (cliente.nome) linhas.push('Nome: ' + cliente.nome);
     if (cliente.telefone) linhas.push('Telefone: ' + cliente.telefone);
+    if (cliente.cep) linhas.push('CEP de entrega: ' + cliente.cep);
     linhas.push('');
     var total = 0;
     var comMarca = false;
@@ -550,13 +551,14 @@
   var campoNome = janela && janela.querySelector('[data-campo-nome]');
   var campoEmpresa = janela && janela.querySelector('[data-campo-empresa]');
   var campoTelefone = janela && janela.querySelector('[data-campo-telefone]');
+  var campoCep = janela && janela.querySelector('[data-campo-cep]');
   var confirma = janela && janela.querySelector('[data-confirma]');
   var avisoCopia = janela && janela.querySelector('[data-copiado]');
   var relogio = null;
 
   function cliente() {
     if (!campoNome) return leCliente();
-    return { nome: campoNome.value.trim(), empresa: campoEmpresa.value.trim(), telefone: campoTelefone.value.trim() };
+    return { nome: campoNome.value.trim(), empresa: campoEmpresa.value.trim(), telefone: campoTelefone.value.trim(), cep: campoCep ? campoCep.value.trim() : '' };
   }
 
   function atualizaLink() {
@@ -646,8 +648,11 @@
     if (campoNome.value.trim().length < 2) faltas.push([campoNome, 'o nome']);
     if (campoEmpresa.value.trim().length < 2) faltas.push([campoEmpresa, 'a empresa']);
     if (digitos < 10 || digitos > 13) faltas.push([campoTelefone, 'o telefone com DDD']);
+    // o CEP é opcional; se a pessoa começou a escrever, tem de ter os 8 números
+    var cep = campoCep ? campoCep.value.replace(/\D/g, '').length : 0;
+    if (cep && cep !== 8) faltas.push([campoCep, 'o CEP com 8 números']);
     if (!avisar) return faltas.length === 0;
-    [campoNome, campoEmpresa, campoTelefone].forEach(function (campo) {
+    [campoNome, campoEmpresa, campoTelefone, campoCep].filter(Boolean).forEach(function (campo) {
       var falta = faltas.some(function (f) { return f[0] === campo; });
       if (falta) campo.setAttribute('aria-invalid', 'true'); else campo.removeAttribute('aria-invalid');
     });
@@ -668,6 +673,7 @@
     campoNome.value = c.nome;
     campoEmpresa.value = c.empresa;
     campoTelefone.value = c.telefone;
+    if (campoCep) campoCep.value = c.cep || '';
   }
 
   // copiar para a área de transferência; se a API moderna não existir (página sem https) ou for recusada, tenta o jeito antigo
@@ -719,7 +725,7 @@
       b.addEventListener('click', function () { if (janela.close) janela.close(); else janela.removeAttribute('open'); });
     });
 
-    [campoNome, campoEmpresa, campoTelefone].forEach(function (campo) {
+    [campoNome, campoEmpresa, campoTelefone, campoCep].filter(Boolean).forEach(function (campo) {
       campo.addEventListener('input', function () {
         gravaCliente(cliente()); atualizaLink();
         if (campo.hasAttribute('aria-invalid') || !janela.querySelector('[data-falta]').hidden) {

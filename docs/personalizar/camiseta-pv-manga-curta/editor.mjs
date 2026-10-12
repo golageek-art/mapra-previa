@@ -1,4 +1,4 @@
-import { ZONES, fitLayer, moveLayer, quantityTotal, validateProject, importProject, activeLayers, chestMode } from './core.mjs';
+import { ZONES, TINT_COLORS, fitLayer, moveLayer, quantityTotal, validateProject, importProject, activeLayers, chestMode } from './core.mjs';
 import { removeSolidBackground, tintArt } from './fundo.mjs';
 import { desenhaFicha, guardaFicha } from './ficha.mjs';
 import { isSleeve, viewFor, displayZone, visibleZones, geometry as layerGeometry, dyeMatrix, fabricAngle, viewBoxFor } from './presentation.mjs';
@@ -331,7 +331,7 @@ function renderArtMenu() {
   $('art-menu-panel').hidden = !measuresOpen; $('art-menu-measures').setAttribute('aria-expanded', String(measuresOpen));
   const colorMode = mode === 'keep' ? 'all' : mode;
   const src = (m, t) => variants.get(variantKey(url, m, t)) || url;
-  const wanted = look.removable ? [['all', 'original'], ['outer', 'original'], ['keep', 'original'], [colorMode, 'white'], [colorMode, 'black']] : (look.transparent ? [[mode, 'white'], [mode, 'black']] : []);
+  const wanted = look.removable ? [['all', 'original'], ['outer', 'original'], ['keep', 'original']] : [];
   const missing = wanted.filter(([m, t]) => !variants.has(variantKey(url, m, t)));
   if (missing.length) { Promise.all(missing.map(([m, t]) => preparePreview(url, null, m, t))).then(() => { if (menuLayer()?.id === layer.id) renderArtMenu(); }).catch(() => {}); }
   $('art-menu-looks').replaceChildren();
@@ -344,15 +344,32 @@ function renderArtMenu() {
   }
   if (look.removable || look.transparent) {
     const enabled = (look.removable && mode !== 'keep') || look.transparent;
-    $('art-menu-looks').append(lookGroup('Cor', [
-      ['original', 'Cores', { src: src(colorMode, 'original'), fundo: 'xadrez' }],
-      ['white', 'Toda branca', { src: src(colorMode, 'white'), fundo: 'escuro' }],
-      ['black', 'Toda preta', { src: src(colorMode, 'black'), fundo: 'xadrez' }],
-    ], tint, enabled, (value) => chooseArtLook(layer, { tint: value }), enabled ? 'Pinta a logo de uma cor só, para ver como fica.' : 'Tire o fundo para usar uma cor só.'));
+    $('art-menu-looks').append(tintGroup(layer, tint, enabled));
   }
   const note = $('art-menu-note');
   note.hidden = look.removable || look.transparent;
   if (!note.hidden) note.textContent = 'O fundo não é liso. Para ficar certo, mande PNG sem fundo.';
+}
+// Cor da logo: as cores dela mesma ou toda de uma cor só (só na prévia; a Mapra confirma a cor da tinta).
+function tintGroup(layer, current, enabled) {
+  const group = document.createElement('div'); group.className = 'look-group' + (enabled ? '' : ' desligado');
+  const label = document.createElement('p'); label.className = 'look-title';
+  label.textContent = 'Cor da logo' + (current === 'original' ? '' : ': toda ' + TINT_COLORS[current][0].toLowerCase());
+  label.title = enabled ? 'Pinta a logo de uma cor só, para ver como fica.' : 'Tire o fundo para usar uma cor só.';
+  const row = document.createElement('div'); row.className = 'tint-row'; row.setAttribute('role', 'group'); row.setAttribute('aria-label', 'Cor da logo');
+  const add = (value, name, hex) => {
+    const option = document.createElement('button'); option.type = 'button'; option.className = 'tint' + (hex ? '' : ' original'); option.disabled = !enabled;
+    option.setAttribute('aria-pressed', String(enabled && value === current));
+    option.title = hex ? 'Toda ' + name.toLowerCase() : 'As cores da própria logo';
+    option.setAttribute('aria-label', option.title);
+    if (hex) { const dot = document.createElement('i'); dot.style.setProperty('--c', hex); option.append(dot); } else option.textContent = name;
+    if (enabled) option.addEventListener('click', () => { if (value !== current) chooseArtLook(layer, { tint: value }); });
+    row.append(option);
+  };
+  add('original', 'Original');
+  for (const [key, [name, hex]] of Object.entries(TINT_COLORS)) add(key, name, hex);
+  group.append(label, row);
+  return group;
 }
 function closeArtMenu() {
   selectedId = null; adjustingId = null; measuresOpen = false;
@@ -487,7 +504,7 @@ async function preparePreview(dataUrl, image = null, mode = 'all', tint = 'origi
     data = mode === 'all' ? probe.data : removeSolidBackground(pixels.data, pixels.width, pixels.height, { enclosed: false }).data;
     edited = true;
   }
-  if (tint !== 'original' && ((info.removable && mode !== 'keep') || info.transparent)) { data = tintArt(data, tint); edited = true; }
+  if (tint !== 'original' && ((info.removable && mode !== 'keep') || info.transparent)) { data = tintArt(data, TINT_COLORS[tint]?.[1] || tint); edited = true; }
   if (!edited) { variants.set(key, dataUrl); return; }
   pixels.data.set(data); context.putImageData(pixels, 0, 0);
   variants.set(key, canvas.toDataURL('image/png'));
@@ -897,12 +914,12 @@ $('zoom-out').addEventListener('click', () => setZoom(previousZoom()));
 /* ---------- conferência dentro da página; a peça pronta entra no "Meu pedido" do site ---------- */
 const review = $('review');
 const BACKGROUND_SHORT = { all: 'fundo tirado', outer: 'só o fundo de fora tirado', keep: 'fundo mantido' };
-const TINT_SHORT = { original: 'cores da logo', white: 'toda branca', black: 'toda preta' };
+const tintShort = (tint) => (tint === 'original' || !TINT_COLORS[tint] ? 'cores da logo' : 'toda ' + TINT_COLORS[tint][0].toLowerCase());
 function artLook(layer) {
   const mode = modeOf(layer), tint = tintOf(layer);
   const parts = [];
   if (analysis.get(layer.art.dataUrl)?.removable) parts.push(BACKGROUND_SHORT[mode]);
-  parts.push(TINT_SHORT[tint]);
+  parts.push(tintShort(tint));
   return parts.join(', ');
 }
 function groupedSizes(quantities) {
@@ -1091,6 +1108,19 @@ const wantedColor = new URLSearchParams(location.search).get('cor');
 const linkedColor = wantedColor && catalog.paleta.find(([name]) => name.toLowerCase() === wantedColor.trim().toLowerCase());
 if (linkedColor) project.color = { name: linkedColor[0], hex: linkedColor[1] };
 renderAll();
+// Quem vem de um cartão do catálogo já viu a foto, o nome e o tecido da peça: cai direto em "Personalize".
+// A peça continua logo acima (é só rolar) e quem chega pelo Google vê a página do começo.
+if (location.hash === '#personalizar') {
+  const target = document.getElementById('personalizar');
+  let touched = false;
+  for (const type of ['touchstart', 'wheel', 'keydown']) addEventListener(type, () => { touched = true; }, { once: true, passive: true });
+  const land = () => {
+    if (!target || touched) return;
+    const fixed = phoneQuery.matches ? document.querySelector('.preview-panel').offsetHeight : 0;
+    scrollTo({ top: Math.max(0, scrollY + target.getBoundingClientRect().top - fixed - 14), behavior: 'instant' });
+  };
+  land(); addEventListener('load', land, { once: true }); setTimeout(land, 400);
+}
 try {
   const saved = JSON.parse(localStorage.getItem(ORDER_KEY));
   const pieces = Array.isArray(saved) ? saved.reduce((sum, item) => sum + (parseInt(item?.qtd, 10) || 0), 0) : 0;

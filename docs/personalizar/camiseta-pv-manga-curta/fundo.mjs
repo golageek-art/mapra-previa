@@ -138,11 +138,13 @@ export function removeSolidBackground(data, width, height, { tolerance = 40, enc
  */
 export function tintArt(data, tint) {
   const copy = new Uint8ClampedArray(data);
-  if (tint !== 'white' && tint !== 'black') return copy;
-  const value = tint === 'white' ? 255 : 17;
+  // 'white', 'black' ou uma cor em hexadecimal ('#1f4fc2'); qualquer outra coisa devolve a arte como está
+  const hex = tint === 'white' ? '#ffffff' : tint === 'black' ? '#111111' : (/^#[0-9a-f]{6}$/i.test(String(tint)) ? tint : null);
+  if (!hex) return copy;
+  const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
   for (let i = 0; i < copy.length; i += 4) {
     if (copy[i + 3] === 0) continue;
-    copy[i] = value; copy[i + 1] = value; copy[i + 2] = value;
+    copy[i] = r; copy[i + 1] = g; copy[i + 2] = b;
   }
   return copy;
 }

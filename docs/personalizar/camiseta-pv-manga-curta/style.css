@@ -590,7 +590,7 @@ body{font-size:17px;font-weight:450}
 .configuration .color-bar .section-heading h2{font-size:30px}
 /* computador: a camiseta inteira cabe na altura da tela já na chegada, com o cabeçalho do site ainda à vista */
 @media(min-width:761px){
-  .stage-frame{width:min(100%,calc(100vh - 236px));min-width:340px}
+  .stage-frame{width:min(100%,calc(100vh - 268px));min-width:340px}
 }
 @media(max-width:760px){
   .configuration .control-section.color-bar{padding:20px 16px}
@@ -602,3 +602,15 @@ body{font-size:17px;font-weight:450}
 /* etapa 3: caminho para a tabela de medidas */
 .medidas-ajuda{margin:-4px 0 14px}
 .medidas-link{color:var(--tinta);font-weight:650;text-decoration:underline;text-underline-offset:3px}
+
+/* ===== v21: cores da logo em bolinhas, dica de arrastar e nome da peça sempre à vista na ficha ===== */
+.tint-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.tint{display:grid;place-items:center;width:44px;height:44px;padding:0;border:2px solid var(--linha);border-radius:50%;background:var(--branco);color:var(--tinta);cursor:pointer}
+.tint i{width:28px;height:28px;border-radius:50%;background:var(--c);outline:1.5px solid var(--tinta)}
+.tint.original{width:auto;padding:0 15px;border-radius:999px;font-size:14.5px;font-weight:700}
+.tint[aria-pressed=true]{border-color:var(--tinta);box-shadow:0 0 0 3px var(--amarelo)}
+.tint:disabled{cursor:not-allowed}
+.art-menu-dica{margin:0;font-size:15px;color:var(--giz)}
+.art-menu-dica span{color:var(--tinta);font-size:17px}
+.stage-nome{margin:0;padding:6px 10px 5px;background:var(--tinta);color:var(--branco);font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.intro{scroll-margin-top:calc(var(--foto-h,0px) + 14px)}

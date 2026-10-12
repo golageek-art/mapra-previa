@@ -8,7 +8,13 @@ const EPSILON = 0.00001;
 const PROVISIONAL_NOTE = 'Medidas e áreas de aplicação provisórias. A Mapra deve conferir a peça, a escala e os limites antes da produção.';
 const MIMES = new Set(['image/png', 'image/jpeg', 'image/webp']);
 const BACKGROUND_MODES = ['all', 'outer', 'keep']; // tirar fundo e miolos / só o de fora / manter como enviado
-const TINTS = ['original', 'white', 'black']; // cores da logo / toda branca / toda preta
+// Logo de uma cor só, só na prévia: chave -> [nome (no feminino, combina com "toda ..."), cor]. A Mapra confirma a cor da tinta.
+export const TINT_COLORS = {
+  white: ['Branca', '#ffffff'], black: ['Preta', '#111111'], amarelo: ['Amarela', '#ffd400'], dourado: ['Dourada', '#c9a227'],
+  laranja: ['Laranja', '#f47a1f'], vermelho: ['Vermelha', '#d21f26'], verde: ['Verde', '#0a8f3c'], azul: ['Azul', '#1f4fc2'],
+  marinho: ['Azul-marinho', '#1b2a4e'], cinza: ['Cinza', '#8a8d91'],
+};
+const TINTS = ['original', ...Object.keys(TINT_COLORS)]; // cores da logo, ou toda de uma cor
 const TEXT_LIMITS = { id: 80, slug: 160, name: 180, fabric: 120, color: 80, customer: 160, technique: 100, notes: 2000, filename: 180, calibration: 500 };
 
 function zone(id, label, view, x, y, width, height) {
