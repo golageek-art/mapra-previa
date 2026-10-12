@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Site novo da Mapra: os próximos 15 dias</title>
+<style>
+:root{--preto:#0c0c0d;--tinta:#17181a;--amarelo:#ffe600;--papel:#f2f3f0;--branco:#fff;--giz:#4a4d51;--linha:#d9dbd6;--verde:#0a7a3b;--verde-f:#e3f4ea;--azul:#1d4ed8;--azul-f:#e2ebfd;--laranja:#b45309;--laranja-f:#fdefd8;--vermelho:#b3261e}
+*{box-sizing:border-box}
+body{margin:0;background:var(--papel);color:var(--tinta);font:500 16.5px/1.45 system-ui,-apple-system,"Segoe UI",Arial,sans-serif}
+.caixa{max-width:1100px;margin:0 auto;padding-inline:16px}
+h1,h2,h3{margin:0;font-family:"Arial Narrow","Segoe UI",Arial,sans-serif;font-weight:800;text-transform:uppercase;line-height:1.02;letter-spacing:.01em}
+p{margin:0}
+.rot{font:600 12px/1.3 ui-monospace,Consolas,monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--giz)}
+a{color:inherit}
+.topo{background:var(--preto);color:#fff;padding:22px 0 20px}
+.topo .rot{color:var(--amarelo)}
+.topo h1{font-size:clamp(30px,7vw,52px);margin-top:6px}
+.topo h1 em{font-style:normal;color:var(--amarelo)}
+.metas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:16px}
+.meta{padding:12px 14px;border:1.5px solid rgba(255,255,255,.5);border-radius:10px}
+.meta b{display:block;font-size:19px;color:var(--amarelo)}
+.meta span{font-size:15px;color:rgba(255,255,255,.86)}
+.atalhos{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.atalhos a{display:inline-flex;align-items:center;min-height:44px;padding:8px 14px;border-radius:8px;background:var(--amarelo);color:var(--preto);font-weight:700;text-decoration:none}
+.atalhos a.fio{background:none;color:#fff;border:1.5px solid rgba(255,255,255,.6)}
+section{padding:26px 0}
+section + section{border-top:1px solid var(--linha)}
+.cab{display:grid;gap:5px;margin-bottom:14px}
+.cab h2{font-size:clamp(25px,5vw,36px)}
+.cab p{color:#33363a;font-size:15.5px}
+/* passos */
+.fluxo{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;counter-reset:f}
+.fluxo li{counter-increment:f;position:relative;background:var(--branco);border:1.5px solid var(--tinta);border-radius:10px;padding:12px 12px 12px;display:grid;gap:5px;align-content:start}
+.fluxo li::before{content:counter(f);display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--amarelo);outline:1.5px solid var(--tinta);font:700 14px ui-monospace,Consolas,monospace}
+.fluxo li:not(:last-child)::after{content:"→";position:absolute;right:-11px;top:14px;z-index:1;font-weight:800;font-size:18px;background:var(--papel);line-height:1}
+.fluxo b{font-size:16.5px;line-height:1.15}
+.fluxo span{font-size:14px;color:#33363a}
+.fluxo .min{font:600 12px ui-monospace,Consolas,monospace;color:var(--giz);letter-spacing:.06em}
+/* blocos */
+.dupla{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
+.bloco{background:var(--branco);border:1.5px solid var(--tinta);border-radius:10px;overflow:hidden}
+.bloco > header{padding:11px 14px;border-bottom:1.5px solid var(--tinta)}
+.bloco.mostrar > header{background:var(--verde-f)}
+.bloco.decidir > header{background:var(--amarelo)}
+.bloco.material > header{background:var(--laranja-f)}
+.bloco.avisar > header{background:#fde3e1}
+.bloco h3{font-size:22px}
+.bloco header p{font-size:14.5px;color:#33363a;margin-top:2px}
+.item{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 11px;align-items:start;padding:11px 14px;border-bottom:1px solid var(--linha);cursor:pointer}
+.item:last-child{border-bottom:0}
+.item input{width:22px;height:22px;margin:1px 0 0;accent-color:var(--tinta)}
+.item b{font-weight:700;line-height:1.25}
+.item span{grid-column:2;font-size:14.5px;color:#33363a;line-height:1.35}
+.item .porque{display:inline-block;margin-top:4px;padding:1px 7px;border-radius:4px;background:var(--papel);font:600 11.5px/1.5 ui-monospace,Consolas,monospace;letter-spacing:.04em;text-transform:uppercase;color:var(--tinta)}
+.item:has(input:checked) b{text-decoration:line-through;color:var(--giz)}
+.item textarea{grid-column:2;width:100%;min-height:38px;margin-top:6px;padding:7px 9px;border:1.5px solid var(--linha);border-radius:7px;font:inherit;font-size:15px;resize:vertical}
+/* plano das duas semanas */
+.semanas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}
+.semana{background:var(--branco);border:1.5px solid var(--tinta);border-radius:10px;overflow:hidden}
+.semana > header{padding:11px 14px;border-bottom:1.5px solid var(--tinta);background:var(--azul-f)}
+.semana.depois > header{background:var(--papel)}
+.semana ul{list-style:none;margin:0;padding:0}
+.semana li{padding:10px 14px;border-bottom:1px solid var(--linha);font-size:15.5px;line-height:1.3}
+.semana li:last-child{border-bottom:0}
+.semana li small{display:block;margin-top:3px;font:600 11.5px/1.4 ui-monospace,Consolas,monospace;letter-spacing:.04em;text-transform:uppercase;color:var(--laranja)}
+.fecho{margin-top:14px;padding:13px 16px;background:var(--preto);color:#fff;border-radius:10px;font-size:16px}
+.fecho b{color:var(--amarelo)}
+.pe{padding:16px 0 30px;font-size:13.5px;color:var(--giz)}
+@media (max-width:900px){.fluxo{grid-template-columns:repeat(2,minmax(0,1fr))}.fluxo li::after{display:none}.dupla,.semanas{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:520px){.metas{grid-template-columns:minmax(0,1fr)}}
+@media print{.atalhos{display:none}section{padding:14px 0}.bloco,.semana,.fluxo li{break-inside:avoid}}
+</style>
+<style>.fluxo.quatro{grid-template-columns:repeat(4,minmax(0,1fr))}.item.so-texto{cursor:default;grid-template-columns:minmax(0,1fr)}.item.so-texto span{grid-column:1}@media (max-width:900px){.fluxo.quatro{grid-template-columns:repeat(2,minmax(0,1fr))}}</style>
+</head>
+<body>
+
+<header class="topo"><div class="caixa">
+  <p class="rot">Mapra Uniformes · site novo</p>
+  <h1>Os próximos <em>15 dias</em></h1>
+  <div class="metas">
+    <div class="meta"><b>1 · Aprovar o modelo</b><span>A camiseta PV vira o padrão para as outras peças.</span></div>
+    <div class="meta"><b>2 · Combinar o que falta</b><span>As decisões de hoje e o que a Mapra envia, com data.</span></div>
+  </div>
+  <div class="atalhos">
+    <a href="./">Abrir o site</a>
+    <a class="fio" href="esqueleto">Abrir o esqueleto</a>
+  </div>
+</div></header>
+
+<section><div class="caixa">
+  <div class="cab"><p class="rot">Hoje</p><h2>A reunião em quatro passos</h2></div>
+  <ol class="fluxo quatro">
+    <li><b>Fazer um pedido</b><span>No celular, com a logo da Mapra, do começo ao envio.</span></li>
+    <li><b>Ver o que chega</b><span>A mensagem e as fichas no WhatsApp da Mapra.</span></li>
+    <li><b>Ver o esqueleto</b><span>O que está pronto, o que falta e o que vem depois.</span></li>
+    <li><b>Decidir e marcar datas</b><span>As oito decisões e o que a Mapra envia.</span></li>
+  </ol>
+</div></section>
+
+<section><div class="caixa">
+  <div class="cab"><p class="rot">Passo 4</p><h2>Para decidir e para enviar</h2><p>As respostas ficam anotadas nesta página, neste aparelho.</p></div>
+  <div class="dupla">
+    <div class="bloco decidir">
+      <header><h3>Para decidir hoje</h3><p>São as respostas que fazem a primeira semana andar.</p></header>
+      <label class="item"><input type="checkbox"><b>1. O modelo da camiseta PV está aprovado?</b><span>Se sim, ele vai para as outras peças. Se quiser mudar algo, anotamos aqui.<br><span class="porque">Destrava tudo</span></span><textarea data-nota="d1" placeholder="Resposta"></textarea></label><label class="item"><input type="checkbox"><b>2. Qual peça vem depois?</b><span>Sugestão: polo, depois as outras camisetas de malha PV. Qual vende mais?</span><textarea data-nota="d2" placeholder="Ordem das peças"></textarea></label><label class="item"><input type="checkbox"><b>3. O mínimo de 10 peças vale como?</b><span>Por pedido, por modelo ou por arte. Hoje o site pede 10 de cada peça.</span><textarea data-nota="d3" placeholder="Regra"></textarea></label><label class="item"><input type="checkbox"><b>4. O site mostra preço?</b><span>“A partir de”, tabela por quantidade, ou só no WhatsApp.</span><textarea data-nota="d4" placeholder="Resposta"></textarea></label><label class="item"><input type="checkbox"><b>5. Prazo de produção</b><span>Quantos dias depois da arte aprovada.</span><textarea data-nota="d5" placeholder="Dias"></textarea></label><label class="item"><input type="checkbox"><b>6. Jeitos de personalizar e cores de logo</b><span>Silk, bordado, sublimação, DTF: quais a Mapra faz e em quais peças. Quais cores de tinta.</span><textarea data-nota="d6" placeholder="Resposta"></textarea></label><label class="item"><input type="checkbox"><b>7. Bling</b><span>Cada cor e tamanho tem código próprio? O pedido entra como proposta ou direto como venda? Qual é o plano?</span><textarea data-nota="d7" placeholder="Resposta"></textarea></label><label class="item"><input type="checkbox"><b>8. Domínio e troca do site</b><span>Quem tem o acesso do Registro.br e do site de hoje. Pode trocar pelo novo quando estiver pronto?</span><textarea data-nota="d8" placeholder="Resposta"></textarea></label>
+    </div>
+    <div class="bloco material">
+      <header><h3>O que a Mapra envia</h3><p>Cada item com a data combinada.</p></header>
+      <label class="item"><input type="checkbox"><b>Tabela de medidas</b><span>De cada modelagem.<br><span class="porque">Mais urgente</span></span><textarea data-nota="m1" placeholder="Até quando"></textarea></label><label class="item"><input type="checkbox"><b>Fotos reais da fábrica</b><span>Dez a quinze: corte, costura, personalização e fachada. Entram na capa e em “Sobre a fábrica”.</span><textarea data-nota="m2" placeholder="Até quando"></textarea></label><label class="item"><input type="checkbox"><b>Cada peça lisa, de frente e de costas</b><span>Uma foto em fundo claro, para o personalizador. Se não houver, a imagem é gerada.</span><textarea data-nota="m3" placeholder="Até quando"></textarea></label><label class="item"><input type="checkbox"><b>Áreas de estampa em centímetros</b><span>Peito, costas, manga e barra, de cada peça.</span><textarea data-nota="m4" placeholder="Até quando"></textarea></label><label class="item"><input type="checkbox"><b>Cores de cada peça</b><span>Moletom, avental, touca, oversized, calça e boné.</span><textarea data-nota="m5" placeholder="Até quando"></textarea></label><label class="item"><input type="checkbox"><b>Uniformes entregues</b><span>Fotos de trabalhos, com autorização do cliente.</span><textarea data-nota="m6" placeholder="Até quando"></textarea></label><label class="item"><input type="checkbox"><b>Frete</b><span>Peso e medida da peça embalada e a transportadora usada.</span><textarea data-nota="m7" placeholder="Até quando"></textarea></label><label class="item"><input type="checkbox"><b>Texto de privacidade</b><span>Está no rodapé do site. Ler e dizer se está certo.</span><textarea data-nota="m8" placeholder="Até quando"></textarea></label>
+    </div>
+  </div>
+</div></section>
+
+<section><div class="caixa">
+  <div class="cab"><p class="rot">Para saber</p><h2>Como o site está hoje</h2></div>
+  <div class="bloco mostrar">
+    <div class="item so-texto"><b>Só a camiseta PV tem o personalizador</b><span>As outras 20 peças ainda estão no modelo anterior. Elas recebem o personalizador depois da aprovação de hoje.</span></div><div class="item so-texto"><b>A foto da capa é provisória</b><span>Ela sai quando chegarem as fotos reais da fábrica.</span></div><div class="item so-texto"><b>Cores e medidas são aproximadas</b><span>A cartela, as áreas de estampa e as cores de logo esperam os dados da Mapra.</span></div><div class="item so-texto"><b>O envio do pedido tem dois toques</b><span>Primeiro o texto, depois as imagens (fichas e logos), na mesma conversa.</span></div><div class="item so-texto"><b>Páginas “Em breve”</b><span>Tabela de medidas, Sobre a fábrica, Guias e outras já existem e ficam fora do Google até o conteúdo chegar.</span></div>
+  </div>
+</div></section>
+
+<section><div class="caixa">
+  <div class="cab"><p class="rot">O plano</p><h2>O que acontece em cada semana</h2><p>Em laranja, do que cada item precisa para sair.</p></div>
+  <div class="semanas">
+    <div class="semana">
+      <header><h3>Semana 1</h3><p class="rot">Levar o modelo adiante</p></header>
+      <ul>
+        <li>Ajustes pedidos hoje na camiseta PV<small>Precisa: a aprovação de hoje</small></li>
+        <li>Personalizador na polo<small>Precisa: fotos lisas e áreas de estampa</small></li>
+        <li>Tabela de medidas no site<small>Precisa: a tabela de medidas</small></li>
+        <li>“Como funciona” completa<small>Precisa: prazo e jeitos de personalizar</small></li>
+        <li>Regra do mínimo e cores de logo certas<small>Precisa: as decisões 3 e 6</small></li>
+        <li>Teste do pedido inteiro em vários celulares</li>
+      </ul>
+    </div>
+    <div class="semana">
+      <header><h3>Semana 2</h3><p class="rot">Fechar e publicar</p></header>
+      <ul>
+        <li>Personalizador nas outras camisetas de malha PV<small>Precisa: fotos lisas e áreas de estampa</small></li>
+        <li>Capa e “Sobre a fábrica” com fotos reais<small>Precisa: as fotos da fábrica</small></li>
+        <li>Cores certas em cada peça<small>Precisa: as cores de cada peça</small></li>
+        <li>Preço no site, se for o caso<small>Precisa: a decisão 4</small></li>
+        <li>Texto de privacidade aprovado<small>Precisa: a leitura da Mapra</small></li>
+        <li>Troca do site de hoje pelo novo<small>Precisa: o acesso ao domínio</small></li>
+      </ul>
+    </div>
+    <div class="semana depois">
+      <header><h3>Depois</h3><p class="rot">Fora dos 15 dias</p></header>
+      <ul>
+        <li>Personalizador em moletom, calça, regata, cozinha e boné</li>
+        <li>Pedido do site direto no Bling<small>Precisa: a decisão 7</small></li>
+        <li>Frete calculado no pedido<small>Precisa: peso e transportadora</small></li>
+        <li>Página de uniformes entregues<small>Precisa: as fotos dos trabalhos</small></li>
+        <li>Página por tipo de empresa e guias</li>
+      </ul>
+    </div>
+  </div>
+  <p class="fecho"><b>Sobre o prazo:</b> as duas semanas contam a partir da chegada da tabela de medidas, das fotos e das respostas de hoje.</p>
+</div></section>
+
+<p class="pe caixa">Página de trabalho da reunião. As marcações e anotações ficam guardadas só neste aparelho.</p>
+
+<script>
+// guarda as marcações e as anotações neste aparelho; sem isso a página funciona igual, só não lembra
+try {
+  var CHAVE = 'mapra-reuniao-cliente';
+  var guardado = JSON.parse(localStorage.getItem(CHAVE) || '{}');
+  var caixas = document.querySelectorAll('.item input'), notas = document.querySelectorAll('[data-nota]');
+  var grava = function () {
+    var d = { c: [], n: {} };
+    caixas.forEach(function (c, i) { if (c.checked) d.c.push(i); });
+    notas.forEach(function (t) { if (t.value) d.n[t.dataset.nota] = t.value; });
+    localStorage.setItem(CHAVE, JSON.stringify(d));
+  };
+  caixas.forEach(function (c, i) { c.checked = (guardado.c || []).indexOf(i) >= 0; c.addEventListener('change', grava); });
+  notas.forEach(function (t) { t.value = (guardado.n || {})[t.dataset.nota] || ''; t.addEventListener('input', grava); t.addEventListener('click', function (e) { e.stopPropagation(); }); });
+} catch (e) { /* sem armazenamento */ }
+</script>
+</body>
+</html>
