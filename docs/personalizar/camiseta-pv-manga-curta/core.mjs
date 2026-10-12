@@ -1,5 +1,5 @@
 /** Geometry and project validation for the independent Mapra 2D preview. */
-const SCALE = 10; // Provisional editor units per cm, pending measurements from Mapra.
+const SCALE = 11; // Editor units per cm: traditional M body, 561 units / 51 cm.
 const MIN_WIDTH_CM = 0.5;
 const MAX_ART_BYTES = 5 * 1024 * 1024;
 const MAX_PROJECT_BYTES = 20 * 1024 * 1024;
@@ -17,21 +17,20 @@ export const TINT_COLORS = {
 const TINTS = ['original', ...Object.keys(TINT_COLORS)]; // cores da logo, ou toda de uma cor
 const TEXT_LIMITS = { id: 80, slug: 160, name: 180, fabric: 120, color: 80, customer: 160, technique: 100, notes: 2000, filename: 180, calibration: 500 };
 
-function zone(id, label, view, x, y, width, height) {
-  return Object.freeze({ id, label, view, x, y, width, height, cmWidth: width / SCALE, cmHeight: height / SCALE });
+function zone(id, label, view, x, y, width, height, maxWidthCm, maxHeightCm = Infinity) {
+  return Object.freeze({ id, label, view, x, y, width, height, cmWidth: width / SCALE, cmHeight: height / SCALE, maxWidthCm, maxHeightCm });
 }
 
 // Left/right refer to the wearer. On the front, the wearer's left is viewer-right.
 export const ZONES = Object.freeze([
-  zone('peito-esquerdo', 'Peito esquerdo', 'front', 565, 300, 140, 160),
-  zone('peito-direito', 'Peito direito', 'front', 300, 300, 140, 160),
-  zone('peito-centro', 'Peito central', 'front', 330, 295, 340, 370),
+  zone('peito-esquerdo', 'Peito esquerdo', 'front', 565, 300, 140, 160, 9),
+  zone('peito-direito', 'Peito direito', 'front', 300, 300, 140, 160, 9),
+  zone('peito-centro', 'Peito central', 'front', 330, 295, 340, 370, 24),
   // Mangas: 14 cm ao longo da barra por 12 cm do ombro à barra, no meio da manga (medido na foto-base; provisório até conferir na peça real).
-  zone('manga-esquerda', 'Manga esquerda', 'front', 790, 280, 140, 120),
-  zone('manga-direita', 'Manga direita', 'front', 70, 280, 140, 120),
-  zone('barra-frente', 'Barra da frente', 'front', 260, 750, 480, 125),
-  zone('costas-centro', 'Costas', 'back', 330, 245, 340, 480),
-  zone('barra-costas', 'Barra das costas', 'back', 260, 675, 480, 200),
+  zone('manga-esquerda', 'Manga esquerda', 'front', 790, 280, 140, 120, 8, 8),
+  zone('manga-direita', 'Manga direita', 'front', 70, 280, 140, 120, 8, 8),
+  zone('costas-centro', 'Costas', 'back', 330, 245, 340, 480, 28),
+  zone('barra-costas', 'Barra das costas', 'back', 260, 675, 480, 200, 28),
 ]);
 
 const ZONE_BY_ID = new Map(ZONES.map(item => [item.id, item]));
@@ -48,6 +47,14 @@ const finite = value => typeof value === 'number' && Number.isFinite(value);
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 const safeNumber = (value, fallback) => finite(value) ? value : fallback;
 const cleanText = value => typeof value === 'string' ? value.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '').trim() : value;
+
+function cleanParts(parts) {
+  if (!isObject(parts)) return parts;
+  return Object.fromEntries(Object.entries(parts).filter(([key, part]) =>
+    !(key === 'ponta' && isObject(part) && part.name === undefined && part.hex === undefined && ['punho','sobreposta'].includes(part.tipo))
+  ).map(([key, part]) => [key, isObject(part)
+    ? { name: cleanText(part.name), hex: part.hex, ...(key === 'ponta' ? { tipo: part.tipo } : {}) } : part]));
+}
 
 function checkedZone(value) {
   const selected = typeof value === 'string' ? ZONE_BY_ID.get(value) : value;
@@ -73,6 +80,8 @@ export function fitLayer(layer, selectedZone) {
   const cosine = Math.cos(radians);
   const sine = Math.sin(radians);
   const maxWidth = Math.min(
+    region.maxWidthCm ?? Infinity,
+    (region.maxHeightCm ?? Infinity) * ratio,
     region.cmWidth,
     region.cmHeight * ratio,
     region.cmWidth / (cosine + sine / ratio),
@@ -161,6 +170,16 @@ export function validateProject(project, options = { requireQuantity: true }) {
     textError(errors, project.color.name, 'Nome da cor', TEXT_LIMITS.color, true);
     if (typeof project.color.hex !== 'string' || !/^#[0-9a-f]{6}$/i.test(project.color.hex)) errors.push('A cor deve usar o formato hexadecimal #RRGGBB.');
   }
+  if (project.parts !== undefined) {
+    if (!isObject(project.parts)) errors.push('As cores das partes devem ser um objeto.');
+    else for (const [key, part] of Object.entries(project.parts)) {
+      if (!['gola','manga','ponta'].includes(key) || !isObject(part)) { errors.push('Parte inválida.'); continue; }
+      if (key === 'ponta' && !['punho','sobreposta'].includes(part.tipo)) errors.push('Escolha punho ou sobreposta na ponta da manga.');
+      if (key === 'ponta' && part.name === undefined && part.hex === undefined) continue;
+      textError(errors, part.name, 'Cor da ' + key, TEXT_LIMITS.color, true);
+      if (typeof part.hex !== 'string' || !/^#[0-9a-f]{6}$/i.test(part.hex)) errors.push('A cor da ' + key + ' deve usar #RRGGBB.');
+    }
+  }
   if (!isObject(project.customer)) errors.push('Dados do cliente inválidos.');
   else {
     textError(errors, project.customer.name, 'Nome do cliente', TEXT_LIMITS.customer);
@@ -233,22 +252,26 @@ export function importProject(input) {
     createdAt: cleanText(project.createdAt),
     product: { slug: cleanText(project.product.slug), name: cleanText(project.product.name), fabric: cleanText(project.product.fabric) },
     color: { name: cleanText(project.color.name), hex: cleanText(project.color.hex) },
+    ...(project.parts !== undefined ? { parts: cleanParts(project.parts) } : {}),
     customer: { name: cleanText(project.customer.name), company: cleanText(project.customer.company) },
     technique: cleanText(project.technique),
     notes: cleanText(project.notes),
     quantities: Object.fromEntries(quantityEntries),
     chestMode: chestMode(project),
-    layers: project.layers.map(layer => {
+    layers: project.layers.filter(layer => layer?.zoneId !== ['barra', 'frente'].join('-')).map(layer => {
       if (!isObject(layer) || !isObject(layer.art)) throw new Error('Uma aplicação tem estrutura inválida.');
       // projetos antigos só tinham "removeBackground": falso vira "manter como enviei"
       const backgroundMode = BACKGROUND_MODES.includes(layer.backgroundMode) ? layer.backgroundMode : (layer.removeBackground === false ? 'keep' : 'all');
-      return {
+      const importedLayer = {
         id: cleanText(layer.id), zoneId: cleanText(layer.zoneId), view: cleanText(layer.view),
         xCm: layer.xCm, yCm: layer.yCm, widthCm: layer.widthCm, heightCm: layer.heightCm, angle: layer.angle,
         removeBackground: backgroundMode !== 'keep', backgroundMode,
         tint: TINTS.includes(layer.tint) ? layer.tint : 'original',
         art: { name: cleanText(layer.art.name), mime: layer.art.mime, dataUrl: layer.art.dataUrl, pixelWidth: layer.art.pixelWidth, pixelHeight: layer.art.pixelHeight },
       };
+      const region = ZONE_BY_ID.get(importedLayer.zoneId);
+      return region && (importedLayer.widthCm > region.maxWidthCm || importedLayer.heightCm > region.maxHeightCm)
+        ? fitLayer(importedLayer, region) : importedLayer;
     }),
     calibration: { verified: false, note: PROVISIONAL_NOTE },
   };

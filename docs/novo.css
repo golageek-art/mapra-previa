@@ -641,6 +641,14 @@ section[id],:target{scroll-margin-top:calc(var(--fixo-h,120px) + 12px)}
 .pedido-volta{justify-self:start;min-height:40px;padding:6px 0;border:0;background:none;color:var(--giz);font:inherit;font-size:14.5px;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 
 .pedido-campos .opcional{font-weight:400;color:var(--giz);font-size:14px}
+
+.ico-carrinho{flex-shrink:0;vertical-align:middle;margin-right:6px}
+
+/* envio das imagens antes de abrir o WhatsApp */
+.pedido-acoes [aria-disabled="true"]{opacity:.65;cursor:wait}
+.pedido-enviado{display:grid;gap:8px}
+.pedido-enviado p{font-weight:650}
+.pedido-enviado[hidden],.pedido-acoes [data-envio-progresso][hidden],.pedido-acoes [data-envio-aviso][hidden]{display:none}
 /* Páginas de texto: contato (e, depois, as páginas novas). */
 .contatos{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-top:26px}
 .contatos div{background:var(--branco);border:1.5px solid var(--tinta);padding:16px;display:grid;gap:4px;align-content:start}
@@ -666,3 +674,20 @@ section[id],:target{scroll-margin-top:calc(var(--fixo-h,120px) + 12px)}
 .prosa a{font-weight:600}
 .revisao{justify-self:start;padding:2px 9px 1px;background:var(--branco);border:1.5px solid var(--tinta);font-family:var(--mono);font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--tinta)!important}
 @media (max-width:520px){.embreve{padding:18px 16px 20px}.acoes-texto .btn{flex:1 1 100%}}
+
+/* Tabelas recebidas da Mapra: rolagem somente dentro da tabela. */
+.medidas-lista{display:grid;gap:32px;min-width:0}
+.medidas-modelagem{min-width:0}
+.medidas-modelagem h2{font-size:28px;margin:0 0 12px}
+.medidas-rolagem{max-width:100%;overflow-x:auto;border:1.5px solid var(--tinta);background:var(--branco)}
+.medidas-rolagem table{width:max-content;min-width:100%;border-collapse:collapse;font-size:14px}
+.medidas-rolagem th,.medidas-rolagem td{min-width:48px;padding:6px 4px;text-align:center;border-bottom:1px solid var(--linha);white-space:nowrap}
+.medidas-rolagem th{font-weight:600}
+.medidas-rolagem thead{background:var(--amarelo)}
+.medidas-rolagem tbody th{text-align:left}
+.medidas-rolagem caption{padding:8px;text-align:left;font-size:13px}
+
+.medidas-rolagem tr>:first-child{position:sticky;left:0;z-index:1;background:var(--branco);text-align:left}
+.medidas-rolagem thead tr>:first-child{z-index:2;background:var(--amarelo)}
+.medidas-dica{display:none}
+@media(max-width:599px){.medidas-dica{display:block;margin:8px 0 0;font-size:13px;line-height:1.4;color:var(--giz)}}

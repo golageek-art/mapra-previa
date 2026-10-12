@@ -209,9 +209,20 @@
 // Lê o que o visitante escolheu em el.estado (mostruario.js) e monta a mensagem do WhatsApp. Sem bibliotecas.
 (function () {
   'use strict';
+  // Identidade por nomes dos arquivos, confirmada pelo Thiago; conjunto independente dos lugares.
+  function foraDoMinimo(itens, minimo) {
+    minimo = minimo || 10;
+    function chave(item) {
+      return JSON.stringify(Array.from(new Set((item.artes || []).map(function (a) { return a.arquivo; }))).sort());
+    }
+    var grupos = new Set(itens.filter(function (i) { return i.qtd >= minimo; }).map(chave));
+    return itens.filter(function (i) { return i.qtd < minimo && !grupos.has(chave(i)); });
+  }
+  if (typeof module !== 'undefined' && module.exports) { module.exports = { foraDoMinimo: foraDoMinimo, normaliza: normaliza, mesmo: mesmo, mensagem: mensagem, textoPartes: textoPartes }; return; }
   var raiz = document.documentElement;
   var NUMERO = raiz.dataset.zap;
   var MINIMO = parseInt(raiz.dataset.minimo, 10) || 10;
+  var ORCAMENTOS_URL = (raiz.dataset.orcamentosUrl || '').replace(/\/+$/, '');
 
   function zap(msg) { return 'https://wa.me/' + NUMERO + '?text=' + encodeURIComponent(msg); }
   function pecas(n) { return n + (n === 1 ? ' peça' : ' peças'); }
@@ -251,6 +262,7 @@
       slug: i.slug,
       nome: i.nome,
       cor: typeof i.cor === 'string' ? i.cor : '',
+      parts: normalizaParts(i.parts),
       qtd: qtd,
       marca: Array.isArray(i.marca) ? i.marca.filter(function (s) { return typeof s === 'string'; }) : [],
       tam: tam,
@@ -260,6 +272,25 @@
       id: texto(i.id, 60),
       ficha: i.ficha === true
     };
+  }
+  function normalizaParts(parts) {
+    var out = {};
+    ['gola', 'manga', 'ponta'].forEach(function (key) {
+      var p = parts && parts[key];
+      if (!p || typeof p.name !== 'string' || !p.name.trim() || typeof p.hex !== 'string' || !/^#[0-9a-f]{6}$/i.test(p.hex)) return;
+      if (key === 'ponta' && ['punho', 'sobreposta'].indexOf(p.tipo) === -1) return;
+      out[key] = { name: texto(p.name.trim(), 80), hex: p.hex.toLowerCase() };
+      if (key === 'ponta') out[key].tipo = p.tipo;
+    });
+    return out;
+  }
+  function textoPartes(parts) {
+    var clean = normalizaParts(parts);
+    var lines = Object.keys(clean).map(function (key) {
+      var label = key === 'gola' ? 'gola' : key === 'manga' ? 'manga' : clean[key].tipo === 'sobreposta' ? 'manga sobreposta' : 'punho';
+      return label + ' ' + clean[key].name;
+    });
+    return lines.length ? 'Outras cores: ' + lines.join(', ') : '';
   }
   function texto(v, limite) { return typeof v === 'string' ? v.slice(0, limite) : ''; }
   // uma arte posta no personalizador: onde fica, a medida, o nome do arquivo e como foi tratada (fundo, cor)
@@ -283,11 +314,21 @@
     memoria = itens;
     try { localStorage.setItem(CHAVE, JSON.stringify(itens)); } catch (e) { /* idem */ }
     apagaFichasFora(itens.map(function (i) { return i.id; }));
+    limpaEnvioUnico();
     poeEtapa(1);
     desenha();
   }
 
   /* ---------- o envio em dois toques, um botão por vez: 1) o texto do pedido; 2) as imagens (só quando há ficha) ---------- */
+  var CHAVE_LINK = 'mapra-envio-link';
+  var envioUnico = null, enviando = false, envioAlternativo = false;
+  try { envioUnico = JSON.parse(sessionStorage.getItem(CHAVE_LINK)); } catch (e) { /* sem link guardado */ }
+  function assinaturaEnvio(itens, cli) { return JSON.stringify([itens, cli]); }
+  function limpaEnvioUnico() {
+    envioUnico = null; envioAlternativo = false;
+    try { sessionStorage.removeItem(CHAVE_LINK); } catch (e) { /* vale a memória */ }
+  }
+  function envioAtual() { return envioUnico && envioUnico.assinatura === assinaturaEnvio(le(), cliente()); }
   var CHAVE_ENVIO = 'mapra-envio';
   var etapaNaMemoria = 1;
   function etapa() {
@@ -302,10 +343,13 @@
   function desenhaEtapa() {
     if (!janela) return;
     var tem = temFichas();
-    var dois = tem && etapa() === 2;
-    janela.querySelector('[data-envia]').hidden = dois;
-    janela.querySelector('[data-dica-fichas]').hidden = !tem || dois;
+    var enviado = envioAtual();
+    var dois = !enviado && tem && etapa() === 2;
+    janela.querySelector('[data-envia]').hidden = dois || enviado;
+    janela.querySelector('[data-dica-fichas]').hidden = enviado || !tem || dois || (ORCAMENTOS_URL && !envioAlternativo);
     janela.querySelector('[data-passo2]').hidden = !dois;
+    janela.querySelector('[data-envio-concluido]').hidden = !enviado;
+    if (enviado) janela.querySelector('[data-envio-reabrir]').href = envioUnico.href;
   }
 
   /* ---------- ficha do pedido: uma imagem com o cliente e todas as peças (o mesmo do texto, para ir junto das fichas) ---------- */
@@ -357,6 +401,7 @@
         y += 4;
         c.font = corpo(26, 600);
         var detalhes = [item.cor ? 'Cor: ' + item.cor : 'Cor a definir'];
+        var outras = textoPartes(item.parts); if (outras) detalhes.push(outras);
         if (item.marca.length) detalhes.push('Marca: ' + item.marca.join(', ').toLowerCase());
         item.artes.forEach(function (a) { detalhes.push('Arte: ' + textoArte(a)); });
         if (item.tecnica) detalhes.push('Aplicação: ' + item.tecnica);
@@ -434,8 +479,8 @@
   function carregaFichas() {
     if (!janela) return;
     var itens = le().filter(function (i) { return i.ficha && i.id; });
-    if (!itens.length || itens.every(function (i) { return fichas[i.id]; })) { mostraFichas(); return; }
-    banco('readonly', function (loja) { return loja.getAll(); }).then(function (registros) {
+    if (!itens.length || itens.every(function (i) { return fichas[i.id]; })) { mostraFichas(); return Promise.resolve(); }
+    return banco('readonly', function (loja) { return loja.getAll(); }).then(function (registros) {
       (registros || []).forEach(function (r) {
         if (!fichas[r.id] && r.ficha) fichas[r.id] = { ficha: r.ficha, logos: r.logos || [], url: URL.createObjectURL(r.ficha) };
       });
@@ -460,18 +505,19 @@
     });
     desenhaEtapa();
     // quem volta do WhatsApp com o passo 2 por fazer encontra a janela aberta nele
-    if (tem && etapa() === 2 && !janela.open && !abriuSozinha) {
+    if ((envioAtual() || (tem && etapa() === 2)) && !janela.open && !abriuSozinha) {
       abriuSozinha = true;
       if (janela.showModal) janela.showModal(); else janela.setAttribute('open', '');
     }
   }
   var abriuSozinha = false;
   // os arquivos que seguem na conversa: a ficha de cada peça e as logos originais, na ordem do pedido
-  function arquivosDoPedido() {
+  function arquivosDoPedido(itens, cli) {
+    itens = itens || le(); cli = cli || cliente();
     var arquivos = [];
-    var capa = desenhaCapa(le(), cliente());
+    var capa = desenhaCapa(itens, cli);
     if (capa) arquivos.push(capa);
-    le().forEach(function (item, indice) {
+    itens.forEach(function (item, indice) {
       var f = item.id && fichas[item.id];
       if (!f) return;
       var n = indice + 1;
@@ -507,6 +553,7 @@
   function mesmo(a, b) {
     if (a.artes.length || b.artes.length || a.obs || b.obs || a.tecnica !== b.tecnica) return false;
     if (a.slug !== b.slug || a.cor !== b.cor) return false;
+    if (JSON.stringify(normalizaParts(a.parts)) !== JSON.stringify(normalizaParts(b.parts))) return false;
     if (a.marca.length !== b.marca.length) return false;
     for (var x = 0; x < a.marca.length; x++) { if (a.marca[x] !== b.marca[x]) return false; }
     var ka = Object.keys(a.tam);
@@ -528,6 +575,7 @@
       total += i.qtd;
       linhas.push('• ' + i.qtd + ' × ' + i.nome);
       if (i.cor) linhas.push('  Cor: ' + i.cor);
+      var outras = textoPartes(i.parts); if (outras) linhas.push('  ' + outras);
       if (i.marca.length) { linhas.push('  Marca: ' + i.marca.join(', ').toLowerCase()); comMarca = true; }
       if (i.artes.length) {
         linhas.push('  Artes:');
@@ -565,6 +613,7 @@
     if (!janela) return;
     var itens = le();
     if (itens.length) janela.querySelector('[data-envia]').href = zap(mensagem(itens, cliente()));
+    if (envioUnico && !envioAtual()) { limpaEnvioUnico(); desenhaEtapa(); }
   }
 
   function linha(classe, texto) {
@@ -584,16 +633,18 @@
 
     var lista = janela.querySelector('[data-lista]');
     lista.textContent = '';
+    var fora = foraDoMinimo(itens, MINIMO);
     itens.forEach(function (item, indice) {
       var li = document.createElement('li');
       var n = linha('n', item.nome);
       n.appendChild(linha('c', item.cor ? 'Cor: ' + item.cor : 'Cor a definir'));
+      var outras = textoPartes(item.parts); if (outras) n.appendChild(linha('c', outras));
       if (item.marca.length) n.appendChild(linha('c', 'Marca: ' + item.marca.join(', ').toLowerCase()));
       item.artes.forEach(function (a) { n.appendChild(linha('c arte', a.lugar + (a.medida ? ' · ' + a.medida : ''))); });
       var t = textoTamanhos(item.tam);
       if (t) n.appendChild(linha('c', 'Tamanhos: ' + t));
       if (item.tecnica) n.appendChild(linha('c', 'Aplicação: ' + item.tecnica));
-      if (item.qtd < MINIMO) n.appendChild(linha('c falta', 'Mínimo de ' + MINIMO + ' por peça: ' + faltam(item.qtd) + '.'));
+      if (fora.indexOf(item) !== -1) n.appendChild(linha('c falta', 'A primeira peça com esta personalização precisa de 10 unidades: ' + faltam(item.qtd) + '.'));
       if (item.ficha && item.id) {
         var ficha = document.createElement('a');
         ficha.className = 'pedido-ficha'; ficha.target = '_blank'; ficha.rel = 'noopener'; ficha.hidden = true;
@@ -623,13 +674,22 @@
     janela.querySelector('[data-acoes]').hidden = vazio;
     janela.querySelector('[data-total]').textContent = pecas(total);
     var aviso = janela.querySelector('[data-minimo]');
-    var abaixo = itens.filter(function (i) { return i.qtd < MINIMO; });
+    var abaixo = fora;
     aviso.hidden = vazio || !abaixo.length;
-    if (!aviso.hidden) aviso.textContent = 'Cada peça do pedido precisa de pelo menos ' + MINIMO + ' unidades. Confira ' + (abaixo.length === 1 ? 'a peça marcada' : 'as peças marcadas') + ' acima.';
+    if (!aviso.hidden) aviso.textContent = 'Cada personalização precisa de uma peça com 10 unidades ou mais. Depois dela, as outras peças com a mesma personalização podem ser avulsas.';
     if (avisoCopia) avisoCopia.textContent = '';
     perguntaEsvaziar(false);
     atualizaLink();
     carregaFichas();
+  }
+
+  function minimoCompleto() {
+    if (!foraDoMinimo(le(), MINIMO).length) return true;
+    var aviso = janela.querySelector('[data-minimo]');
+    aviso.hidden = false;
+    aviso.textContent = 'Cada personalização precisa de uma peça com 10 unidades ou mais. Depois dela, as outras peças com a mesma personalização podem ser avulsas.';
+    aviso.scrollIntoView({ block: 'nearest' });
+    return false;
   }
 
   function perguntaEsvaziar(mostra) {
@@ -738,8 +798,79 @@
     var botaoEnvia = janela.querySelector('[data-envia]');
     // no computador a conversa abre em outra aba, para o site continuar aqui com o passo 2
     if (window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches) { botaoEnvia.target = '_blank'; }
+    var rotuloEnvia = botaoEnvia.innerHTML;
+    function estadoEnviando(ativo, total) {
+      enviando = ativo;
+      botaoEnvia.setAttribute('aria-disabled', String(ativo));
+      botaoEnvia.setAttribute('aria-busy', String(ativo));
+      botaoEnvia.innerHTML = ativo ? 'Enviando as imagens…' : rotuloEnvia;
+      var progresso = janela.querySelector('[data-envio-progresso]');
+      progresso.hidden = !ativo;
+      if (ativo) progresso.textContent = '0 de ' + total;
+    }
+    async function mandaImagens(itens, cli) {
+      var controle = new AbortController();
+      var prazo = setTimeout(function () { controle.abort(); }, 45000);
+      var aviso = janela.querySelector('[data-envio-aviso]');
+      aviso.hidden = true;
+      estadoEnviando(true, 0);
+      try {
+        // Inclui a leitura local das fichas no mesmo prazo de 45 segundos.
+        await Promise.race([
+          carregaFichas(),
+          new Promise(function (_, erro) { controle.signal.addEventListener('abort', function () { erro(new Error('prazo')); }, { once: true }); })
+        ]);
+        if (controle.signal.aborted || !temFichas()) throw new Error('fichas');
+        var arquivos = arquivosDoPedido(itens, cli);
+        if (arquivos.length < 2) throw new Error('arquivos');
+        var progresso = janela.querySelector('[data-envio-progresso]');
+        progresso.textContent = '0 de ' + arquivos.length;
+        var resposta = await fetch(ORCAMENTOS_URL + '/orcamentos', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: controle.signal,
+          body: JSON.stringify({ arquivos: arquivos.map(function (f, n) {
+            return { nome: f.name, tamanho: f.size, papel: n === 0 ? 'pedido' : f.name.indexOf('ficha-') === 0 ? 'ficha' : 'logo' };
+          }) })
+        });
+        if (!resposta.ok) throw new Error('criar ' + resposta.status);
+        var recebido = await resposta.json();
+        if (!recebido || !recebido.id || !recebido.senha || !recebido.link) throw new Error('resposta');
+        var seguinte = 0, feitos = 0;
+        async function enviaArquivo() {
+          var n = seguinte++;
+          if (n >= arquivos.length) return;
+          var enviado = await fetch(ORCAMENTOS_URL + '/orcamentos/' + encodeURIComponent(recebido.id) + '/' + n, {
+            method: 'PUT', headers: { 'X-Envio': recebido.senha }, body: arquivos[n], signal: controle.signal
+          });
+          if (!enviado.ok) throw new Error('arquivo ' + arquivos[n].name + ' ' + enviado.status);
+          if (controle.signal.aborted) throw new Error('prazo');
+          feitos++; progresso.textContent = feitos + ' de ' + arquivos.length;
+          return enviaArquivo();
+        }
+        await Promise.all(Array.from({ length: Math.min(3, arquivos.length) }, enviaArquivo));
+        var msg = mensagem(itens, cli).replace(/\nVou enviar[^\n]*$/, '');
+        msg += '\nFichas e logos deste orçamento: ' + recebido.link;
+        envioUnico = { assinatura: assinaturaEnvio(itens, cli), href: zap(msg) };
+        try { sessionStorage.setItem(CHAVE_LINK, JSON.stringify(envioUnico)); } catch (e) { /* vale a memória */ }
+        poeEtapa(1);
+        estadoEnviando(false);
+        location.assign(envioUnico.href);
+      } catch (e) {
+        controle.abort();
+        envioAlternativo = true;
+        estadoEnviando(false);
+        poeEtapa(1);
+        aviso.textContent = 'Não deu para enviar as imagens junto. Envie o texto e, depois, as imagens.';
+        aviso.hidden = false;
+      } finally { clearTimeout(prazo); }
+    }
     botaoEnvia.addEventListener('click', function (ev) {
-      if (!dadosCompletos(true)) { ev.preventDefault(); return; }
+      if (enviando) { ev.preventDefault(); return; }
+      if (!minimoCompleto() || !dadosCompletos(true)) { ev.preventDefault(); return; }
+      if (ORCAMENTOS_URL && !envioAlternativo && le().some(function (i) { return i.ficha; })) {
+        ev.preventDefault();
+        mandaImagens(le(), cliente());
+        return;
+      }
       if (temFichas()) setTimeout(function () { poeEtapa(2); }, 400);
     });
     janela.querySelector('[data-reenviar]').addEventListener('click', function () { poeEtapa(1); });
@@ -765,10 +896,10 @@
     janela.querySelector('[data-copia]').addEventListener('click', function () {
       var itens = le();
       if (!itens.length) return;
-      if (!dadosCompletos(true)) return;
+      if (!minimoCompleto() || !dadosCompletos(true)) return;
       var texto = mensagem(itens, cliente());
       copia(texto).then(
-        function () { avisaCopia('Pedido copiado. Agora é só colar na conversa do WhatsApp.'); },
+        function () { avisaCopia('Orçamento copiado. Agora é só colar na conversa do WhatsApp.'); },
         function () { avisaCopia('Não foi possível copiar neste aparelho. Use o botão de enviar no WhatsApp.'); }
       );
     });
@@ -797,11 +928,6 @@
         aviso.className = 'add-aviso'; aviso.setAttribute('role', 'alert'); aviso.setAttribute('data-add-aviso', ''); aviso.hidden = true;
         form.appendChild(aviso);
       }
-      if (item.qtd < MINIMO) {
-        aviso.textContent = 'O mínimo é de ' + MINIMO + ' peças de cada modelo. Você escolheu ' + item.qtd + ': ' + faltam(item.qtd) + '.';
-        aviso.hidden = false;
-        return;
-      }
       aviso.hidden = true;
       var itens = le();
       var igual = itens.filter(function (i) { return mesmo(i, item); })[0];
@@ -812,9 +938,13 @@
         itens.push(item);
       }
       grava(itens);
+      if (foraDoMinimo([item].concat(itens), MINIMO).indexOf(item) !== -1) {
+        aviso.textContent = 'O mínimo é de 10 unidades na primeira peça de cada personalização';
+        aviso.hidden = false;
+      }
       var botao = form.querySelector('button[type="submit"]');
       var texto = botao.textContent;
-      botao.textContent = 'Adicionado ao pedido';
+      botao.textContent = 'Adicionado ao orçamento';
       setTimeout(function () { botao.textContent = texto; }, 2200);
     });
   });

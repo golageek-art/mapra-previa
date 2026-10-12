@@ -1,5 +1,5 @@
 import { ZONES, TINT_COLORS, fitLayer, moveLayer, quantityTotal, validateProject, importProject, activeLayers, chestMode } from './core.mjs';
-import { removeSolidBackground, tintArt } from './fundo.mjs';
+import { removeSolidBackground, tintArt, visibleBounds } from './fundo.mjs';
 import { desenhaFicha, guardaFicha } from './ficha.mjs';
 import { isSleeve, viewFor, displayZone, visibleZones, geometry as layerGeometry, dyeMatrix, fabricAngle, viewBoxFor } from './presentation.mjs';
 
@@ -160,15 +160,103 @@ function renderColor() {
     item.setAttribute('aria-pressed', String(item.dataset.hex.toLowerCase() === project.color.hex.toLowerCase()));
   }
 }
+let partsExpanded = false, partRow = null, pendingTip = null;
+function partsSummary(current = project) {
+  return ['gola','manga','ponta'].filter(key => current.parts?.[key]?.hex).map(key => {
+    const name = key === 'gola' ? 'Gola' : key === 'manga' ? 'Manga' : current.parts[key].tipo === 'sobreposta' ? 'Manga sobreposta' : 'Punho';
+    return name + ' ' + current.parts[key].name;
+  }).join(' · ');
+}
+function choosePart(key, name, hex) {
+  project.parts ||= {};
+  if (!hex) delete project.parts[key];
+  else project.parts[key] = { name, hex, ...(key === 'ponta' ? { tipo: pendingTip || project.parts.ponta?.tipo || 'punho' } : {}) };
+  renderStage(); changed();
+}
+function renderPartsControls() {
+  $('parts-toggle').setAttribute('aria-expanded', String(partsExpanded));
+  $('parts-options').hidden = !partsExpanded;
+  const summary = partsSummary();
+  $('parts-summary').textContent = summary; $('parts-summary').hidden = partsExpanded || !summary;
+  const box = $('parts-options'); box.replaceChildren();
+  if (!partsExpanded) return;
+  for (const [key, label] of [['gola','Gola'],['manga','Manga'],['ponta','Ponta da manga']]) {
+    const group = document.createElement('div'); group.className = 'part-choice';
+    const row = button('', 'parts-row'); row.setAttribute('aria-expanded', String(partRow === key));
+    const title = document.createElement('b'); title.textContent = label;
+    const value = document.createElement('span');
+    const chosen = project.parts?.[key], type = chosen?.tipo || pendingTip || 'sem';
+    value.textContent = chosen?.name || (key === 'ponta' && type !== 'sem' ? 'Escolha a cor' : 'Igual à peça');
+    row.append(title, value); row.addEventListener('click', () => { partRow = partRow === key ? null : key; renderPartsControls(); });
+    group.append(row);
+    if (partRow === key) {
+      if (key === 'ponta') {
+        const types = document.createElement('div'); types.className = 'choice-row part-types';
+        for (const [kind, text] of [['sem','Sem'],['punho','Punho'],['sobreposta','Manga sobreposta']]) {
+          const option = button(text, 'choice'); option.setAttribute('aria-pressed', String(type === kind));
+          option.addEventListener('click', () => {
+            pendingTip = kind === 'sem' ? null : kind;
+            if (kind === 'sem') { if (project.parts) delete project.parts.ponta; }
+            else if (project.parts?.ponta) project.parts.ponta.tipo = kind;
+            renderStage(); changed();
+          }); types.append(option);
+        }
+        group.append(types);
+        const hint = document.createElement('p'); hint.className = 'field-help';
+        hint.textContent = 'Punho: tira de ribana no fim da manga. Manga sobreposta: uma beirada de outra cor aparecendo embaixo da manga.';
+        group.append(hint);
+      }
+      if (key !== 'ponta' || type !== 'sem') {
+        const colors = document.createElement('div'); colors.className = 'cartela part-colors';
+        if (key !== 'ponta') {
+          const equal = button('Igual à peça', 'part-equal'); equal.setAttribute('aria-pressed', String(!chosen));
+          equal.addEventListener('click', () => choosePart(key)); colors.append(equal);
+        }
+        for (const [name, hex] of catalog.paleta) {
+          const color = button('', 'retalho'); color.title = name; color.setAttribute('aria-label', label + ': ' + name);
+          color.setAttribute('aria-pressed', String(chosen?.hex === hex));
+          const fill = document.createElement('i'); fill.style.setProperty('--c', hex); color.append(fill);
+          color.addEventListener('click', () => choosePart(key, name, hex)); colors.append(color);
+        }
+        group.append(colors);
+      }
+    }
+    box.append(group);
+  }
+  const reset = button('Voltar tudo para a cor da peça', 'text-button parts-reset');
+  reset.addEventListener('click', () => { delete project.parts; pendingTip = null; renderStage(); changed(); });
+  box.append(reset);
+}
+$('parts-toggle').addEventListener('click', () => { partsExpanded = !partsExpanded; renderPartsControls(); });
 function baseKey(whichView = view) { return whichView === 'sleeve' ? 'front' : whichView; }
 function basePath(whichView = view) { return asset('img/' + ({ front: 'frente', back: 'costas', sleeve: 'frente' }[whichView]) + '.webp'); }
-function applyBase(element, whichView, data = false, side = sleeveSide) {
+function applyBase(element, whichView, data = false, side = sleeveSide, current = project) {
   const source = data ? baseData[baseKey(whichView)] : basePath(whichView);
   element.querySelector('#shirt-base').setAttribute('href', source);
   element.querySelector('#fabric-light').setAttribute('href', source);
+  paintParts(element, current, whichView, source, data);
   // zoom da manga: a mesma foto, só uma janela menor (nada é recortado)
   const box = viewBoxFor(whichView, side);
   element.setAttribute('viewBox', [box.x, box.y, box.w, box.h].join(' '));
+}
+function paintParts(element, current, whichView, source, embedded = false) {
+  let defs = element.querySelector('#parts-defs'), layers = element.querySelector('#parts-layers');
+  if (!defs) { defs = svgNode('g', { id: 'parts-defs' }); element.querySelector('defs').append(defs); }
+  if (!layers) { layers = svgNode('g', { id: 'parts-layers', 'pointer-events': 'none' }); element.insertBefore(layers, element.querySelector('#art-layers')); }
+  defs.replaceChildren(); layers.replaceChildren();
+  for (const part of ['manga','ponta','gola']) {
+    const color = current.parts?.[part];
+    if (!color?.hex) continue;
+    const suffix = part === 'ponta' && color.tipo === 'sobreposta' ? 'ponta-fina' : part;
+    const key = baseKey(whichView) + '-' + suffix;
+    if (embedded && !baseData[key]) throw new Error('Máscara da parte não carregada.');
+    const mask = svgNode('mask', { id: 'mask-' + part, maskUnits: 'userSpaceOnUse', maskContentUnits: 'userSpaceOnUse', x: 0, y: 0, width: 1000, height: 1000, style: 'mask-type:luminance' });
+    mask.append(svgNode('image', { href: embedded ? baseData[key] : asset('img/partes-' + (baseKey(whichView) === 'front' ? 'frente' : 'costas') + '-' + suffix + '.webp'), x: 0, y: 0, width: 1000, height: 1000 }));
+    const filter = svgNode('filter', { id: 'dye-' + part, 'color-interpolation-filters': 'sRGB' });
+    filter.append(svgNode('feColorMatrix', { type: 'matrix', values: dyeMatrix(color.hex) }));
+    defs.append(mask, filter);
+    layers.append(svgNode('image', { href: source, x: 0, y: 0, width: 1000, height: 1000, filter: 'url(#dye-' + part + ')', mask: 'url(#mask-' + part + ')' }));
+  }
 }
 let shownView = null;
 function renderView() {
@@ -327,6 +415,10 @@ function renderArtMenu() {
   $('art-menu-title').textContent = zoneById(layer.zoneId).label;
   $('art-menu-size').textContent = cm(layer.widthCm) + ' × ' + cm(layer.heightCm) + ' cm';
   $('art-menu-file').textContent = layer.art.name;
+  const area = zoneById(layer.zoneId);
+  $('art-menu-max').textContent = isSleeve(layer.zoneId)
+    ? 'Máximo neste lugar: 8 × 8 cm'
+    : 'Máximo neste lugar: ' + area.maxWidthCm + ' cm de largura';
   $('art-menu-thumb').src = previewSource(layer);
   $('art-menu-panel').hidden = !measuresOpen; $('art-menu-measures').setAttribute('aria-expanded', String(measuresOpen));
   const colorMode = mode === 'keep' ? 'all' : mode;
@@ -368,7 +460,9 @@ function tintGroup(layer, current, enabled) {
   };
   add('original', 'Original');
   for (const [key, [name, hex]] of Object.entries(TINT_COLORS)) add(key, name, hex);
-  group.append(label, row);
+  const note = document.createElement('p'); note.className = 'art-menu-dica';
+  note.textContent = 'A técnica (silk, bordado, sublimação ou DTF) e a cor final da estampa são combinadas com a Mapra pelo WhatsApp.';
+  group.append(label, row, note);
   return group;
 }
 function closeArtMenu() {
@@ -416,9 +510,9 @@ function renderLayerFields(preserveField = '') {
   controls.querySelector('label[for="art-angle"]').firstChild.textContent = isSleeve(layer.zoneId) ? 'Giro extra ' : 'Rotação ';
   if (preserveField !== 'art-x') $('art-x').value = round(layer.xCm);
   if (preserveField !== 'art-y') $('art-y').value = round(layer.yCm);
-  $('art-width').max = zoneById(layer.zoneId).cmWidth;
+  $('art-width').max = zoneById(layer.zoneId).maxWidthCm;
 }
-function renderStage() { renderView(); renderColor(); renderZones(); renderLayers(); }
+function renderStage() { renderView(); renderColor(); renderPartsControls(); renderZones(); renderLayers(); }
 function selectLayer(id) {
   const layer = project.layers.find((entry) => entry.id === id);
   if (!layer) return;
@@ -479,7 +573,10 @@ async function loadArt(file, name = file.name) {
   }
   if (bytesOf(dataUrl) > MAX_ART) throw new Error('Esta imagem continua pesada demais. Escolha uma menor.');
   await preparePreview(dataUrl, image);
-  return { name: String(name || 'arte').slice(0, 160), mime, dataUrl, pixelWidth: image.naturalWidth, pixelHeight: image.naturalHeight };
+  if (analysis.get(dataUrl)?.transparent) await preparePreview(dataUrl, image, 'keep');
+  const bounds = analysis.get(dataUrl)?.bounds;
+  return { name: String(name || 'arte').slice(0, 160), mime, dataUrl,
+    pixelWidth: bounds?.width || image.naturalWidth, pixelHeight: bounds?.height || image.naturalHeight };
 }
 const modeOf = (layer) => layer.backgroundMode || (layer.removeBackground === false ? 'keep' : 'all');
 const tintOf = (layer) => layer.tint || 'original';
@@ -499,15 +596,21 @@ async function preparePreview(dataUrl, image = null, mode = 'all', tint = 'origi
   const probe = removeSolidBackground(pixels.data, pixels.width, pixels.height, { enclosed: true });
   if (!analysis.has(dataUrl)) analysis.set(dataUrl, { removable: probe.removed, transparent: probe.reason === 'ja-transparente', reason: probe.reason });
   const info = analysis.get(dataUrl);
+  const bounds = visibleBounds(probe.data, pixels.width, pixels.height);
+  info.bounds = bounds;
+  const cropped = bounds.x !== 0 || bounds.y !== 0 || bounds.width !== pixels.width || bounds.height !== pixels.height;
   let data = pixels.data, edited = false;
   if (mode !== 'keep' && info.removable) {
     data = mode === 'all' ? probe.data : removeSolidBackground(pixels.data, pixels.width, pixels.height, { enclosed: false }).data;
     edited = true;
   }
   if (tint !== 'original' && ((info.removable && mode !== 'keep') || info.transparent)) { data = tintArt(data, TINT_COLORS[tint]?.[1] || tint); edited = true; }
-  if (!edited) { variants.set(key, dataUrl); return; }
+  if (!edited && !cropped) { variants.set(key, dataUrl); return; }
   pixels.data.set(data); context.putImageData(pixels, 0, 0);
-  variants.set(key, canvas.toDataURL('image/png'));
+  const preview = document.createElement('canvas');
+  preview.width = bounds.width; preview.height = bounds.height;
+  preview.getContext('2d').drawImage(canvas, bounds.x, bounds.y, bounds.width, bounds.height, 0, 0, bounds.width, bounds.height);
+  variants.set(key, preview.toDataURL('image/png'));
 }
 // O cliente muda o fundo ou a cor da arte; só a prévia muda, o arquivo original continua o mesmo.
 async function chooseArtLook(layer, fields) {
@@ -723,7 +826,7 @@ svg.addEventListener('keydown', (event) => {
 async function previewImage(whichView, current, side = sleeveSide) {
   const element = svg.cloneNode(true);
   for (const id of ['zone-overlay', 'art-layers', 'selection-overlay', 'measurement-overlay']) element.querySelector('#' + id).replaceChildren();
-  applyBase(element, whichView, true, side);
+  applyBase(element, whichView, true, side, current);
   element.setAttribute('width', '1000'); element.setAttribute('height', '1000');
   for (const layer of visibleLayers(current, whichView, side)) appendArt(element.querySelector('#art-layers'), layer, whichView, side, false);
   paintMeasurements(element.querySelector('#measurement-overlay'), visibleLayers(current, whichView, side), null, { view: whichView, side, numbers: artNumbers(current), scale: uiScaleFor(whichView, side) * 1.9 });
@@ -737,19 +840,28 @@ async function previewImage(whichView, current, side = sleeveSide) {
     return canvas.toDataURL('image/png');
   } finally { URL.revokeObjectURL(objectUrl); }
 }
-const basesReady = Promise.all([['front', 'frente'], ['back', 'costas']].map(async ([key, name]) => {
+const basesReady = Promise.all([
+  ['front', 'frente'], ['back', 'costas'],
+  ...['front','back'].flatMap(v => ['gola','manga','ponta','ponta-fina'].map(part => [v + '-' + part, 'partes-' + (v === 'front' ? 'frente' : 'costas') + '-' + part])),
+].map(async ([key, name]) => {
   const response = await fetch(asset('img/' + name + '.webp'));
   if (!response.ok) throw new Error('Não foi possível carregar a foto de ' + name + '. Recarregue a página.');
-  baseData[key] = await fileData(new Blob([await response.arrayBuffer()], { type: 'image/png' }));
+  baseData[key] = await fileData(new Blob([await response.arrayBuffer()], { type: 'image/webp' }));
 })).catch((error) => { status(error.message, true); throw error; });
 
 async function checkArtImages(next) {
   await Promise.all(next.layers.map(async (layer) => {
     const image = await decodedImage(layer.art.dataUrl);
     await preparePreview(layer.art.dataUrl, image, modeOf(layer), tintOf(layer));
-    if (image.naturalWidth !== layer.art.pixelWidth || image.naturalHeight !== layer.art.pixelHeight
-        || image.naturalWidth > 12000 || image.naturalHeight > 12000) {
+    const bounds = analysis.get(layer.art.dataUrl)?.bounds;
+    const originalSize = image.naturalWidth === layer.art.pixelWidth && image.naturalHeight === layer.art.pixelHeight;
+    const previewSize = bounds?.width === layer.art.pixelWidth && bounds?.height === layer.art.pixelHeight;
+    if ((!originalSize && !previewSize) || image.naturalWidth > 12000 || image.naturalHeight > 12000) {
       throw new Error('As dimensões da imagem ' + layer.art.name + ' não correspondem ao projeto. Reenvie a arte original.');
+    }
+    if (originalSize && bounds) {
+      layer.art = { ...layer.art, pixelWidth: bounds.width, pixelHeight: bounds.height };
+      Object.assign(layer, fitLayer(layer, zoneById(layer.zoneId)));
     }
   }));
 }
@@ -953,6 +1065,7 @@ const ORDER_KEY = 'mapra-pedido';
 function orderItem(current) {
   return {
     slug: current.product.slug, nome: current.product.name, cor: current.color.name,
+    ...(current.parts && Object.keys(current.parts).length ? { parts: structuredClone(current.parts) } : {}),
     qtd: quantityTotal(current.quantities), marca: [],
     tam: Object.fromEntries(Object.entries(current.quantities).filter(([, amount]) => amount > 0)),
     artes: activeLayers(current).map((layer) => ({ lugar: zoneById(layer.zoneId).label, medida: cm(layer.widthCm) + ' × ' + cm(layer.heightCm) + ' cm', arquivo: layer.art.name, aspecto: artLook(layer) })),
@@ -987,7 +1100,7 @@ async function prepareFicha(id, current) {
     let cliente = '';
     try { const saved = JSON.parse(localStorage.getItem('mapra-cliente')) || {}; cliente = [saved.empresa, saved.nome].filter(Boolean).join(' · '); } catch { /* sem dados ainda */ }
     const ficha = await desenhaFicha({
-      peca: current.product.name, cor: { nome: current.color.name, hex: current.color.hex },
+      peca: current.product.name, cor: { nome: current.color.name, hex: current.color.hex }, parts: current.parts,
       total: quantityTotal(current.quantities), grade: sizeGroups(current.quantities), aviso: current.notes, cliente, vistas,
       artes: arts.map((layer, index) => ({ n: index + 1, lugar: zoneById(layer.zoneId).label, medida: cm(layer.widthCm) + ' × ' + cm(layer.heightCm) + ' cm', arquivo: layer.art.name, aspecto: artLook(layer) })),
     });
@@ -1012,13 +1125,6 @@ function validForOrder(checkMinimum = true) {
     if (review.open) review.close();
     status(errors.join(' '), true);
     scrollToSection(/quantidade|tamanho|peça|grade/i.test(errors.join(' ')) ? 3 : /arte|aplica/i.test(errors.join(' ')) ? 2 : 3);
-    return null;
-  }
-  const total = quantityTotal(current.quantities);
-  if (checkMinimum && total < MIN_PIECES) {
-    if (review.open) review.close();
-    status(missingText(total), true);
-    scrollToSection(3);
     return null;
   }
   return current;

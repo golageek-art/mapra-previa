@@ -614,3 +614,21 @@ body{font-size:17px;font-weight:450}
 .art-menu-dica span{color:var(--tinta);font-size:17px}
 .stage-nome{margin:0;padding:6px 10px 5px;background:var(--tinta);color:var(--branco);font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .intro{scroll-margin-top:calc(var(--foto-h,0px) + 14px)}
+
+.ico-carrinho{flex-shrink:0;vertical-align:middle;margin-right:6px}
+
+/* Cores por parte: opção discreta dentro da etapa da cor. */
+.parts-chooser{margin-top:14px;min-width:0}
+.parts-toggle,.parts-row{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left;color:inherit;font:inherit}
+.parts-toggle{padding:12px 0;border:0;border-bottom:1px solid var(--linha);background:transparent;cursor:pointer}
+.parts-toggle small{font-size:12px;flex-shrink:0}
+.parts-options{padding-top:8px;min-width:0}
+.parts-options[hidden]{display:none}
+.part-choice{border-bottom:1px solid var(--linha);padding:8px 0;min-width:0}
+.parts-row{padding:10px 0;background:transparent;border:0;cursor:pointer}
+.parts-row span{font-size:13px;text-align:right}
+.part-colors{padding:10px 0;gap:6px}
+.part-colors .retalho{width:28px;height:34px}
+.part-equal{font:inherit;font-size:13px;padding:7px;border:1px solid var(--linha);background:var(--branco);color:inherit}
+.part-types{flex-wrap:wrap;margin:8px 0}
+.parts-reset{margin-top:14px}

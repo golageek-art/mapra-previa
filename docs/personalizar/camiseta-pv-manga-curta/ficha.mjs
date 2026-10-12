@@ -58,6 +58,10 @@ export async function desenhaFicha(dados) {
   c.fillStyle = TINTA; c.font = fonte(TEXTO, 27, 600);
   c.fillText('Cor: ' + dados.cor.nome + '   ·   Total: ' + dados.total + (dados.total === 1 ? ' peça' : ' peças'), MARGEM + 44, y);
   y += 34;
+  for (const [key, label] of [['gola', 'Gola'], ['manga', 'Manga'], ['ponta', dados.parts?.ponta?.tipo === 'sobreposta' ? 'Manga sobreposta' : 'Punho']]) {
+    const part = dados.parts?.[key];
+    if (part?.hex) { c.fillText(label + ': ' + part.name, MARGEM, y); y += 34; }
+  }
   if (dados.cliente) { c.fillStyle = GIZ; c.font = fonte(TEXTO, 23, 500); c.fillText(dados.cliente, MARGEM, y + 6); y += 34; }
   y += 14;
 

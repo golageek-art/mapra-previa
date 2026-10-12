@@ -29,10 +29,10 @@
     <nav class="menu" aria-label="Principal">
       <a href="/mapra-previa/catalogo">Catálogo</a><a href="/mapra-previa/como-funciona">Como funciona</a><a href="/mapra-previa/duvidas">Dúvidas</a><a href="/mapra-previa/contato">Contato</a>
     </nav>
-    <a id="order-link" class="meu-pedido" href="/mapra-previa/catalogo#pedido" hidden>Meu pedido <span id="order-count">0</span></a>
+    <a id="order-link" class="meu-pedido" href="/mapra-previa/catalogo#pedido" hidden><svg class="ico-carrinho" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h2.2l2.3 10.5h9.9L19.6 7H6.4"/><circle cx="9" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/></svg>Meu orçamento <span id="order-count">0</span></a>
   </div></header>
 
-  <main class="page" data-zap="5541992681657" data-minimo="10">
+  <main class="page" data-zap="5541992681657" data-minimo="10" data-orcamentos-url="https://mapra-orcamentos.golageek.workers.dev">
     <noscript><p class="sem-js">Para personalizar a camiseta aqui, o navegador precisa estar com o JavaScript ligado. Você também pode pedir direto pelo WhatsApp: <a href="https://wa.me/5541992681657?text=Ol%C3%A1%21%20Quero%20um%20or%C3%A7amento%20de%20Camiseta%20Malha%20PV%20Manga%20Curta%20Gola%20Redonda." rel="noopener">falar com a Mapra</a>.</p></noscript>
     <div class="configurator">
       <section class="preview-panel" aria-label="Visualização da camiseta">
@@ -115,11 +115,16 @@
     <section class="control-section color-bar" data-step="1" aria-labelledby="color-heading">
       <div class="section-heading"><h2 id="color-heading"><span class="passo-n" aria-hidden="true">1</span>Escolha a cor</h2><strong id="color-name">Branca</strong></div>
       <div id="color-swatches" class="color-swatches cartela" role="group" aria-label="Cor da camiseta"></div>
+      <div class="parts-chooser">
+        <button id="parts-toggle" type="button" class="parts-toggle" aria-expanded="false" aria-controls="parts-options"><span>Outra cor na gola ou na manga?</span><small>Opcional</small></button>
+        <p id="parts-summary" class="field-help" hidden></p>
+        <div id="parts-options" class="parts-options" hidden></div>
+      </div>
       <p class="field-help">As cores na tela são aproximadas. A Mapra confirma a cartela da malha.</p>
     </section>
 
         <section class="control-section" data-step="2" aria-labelledby="art-heading">
-          <div class="section-heading"><h2 id="art-heading"><span class="passo-n" aria-hidden="true">2</span>Ponha as suas artes</h2><span class="section-detail">Uma por lugar</span></div>
+          <div class="section-heading"><h2 id="art-heading"><span class="passo-n" aria-hidden="true">2</span>Adicione as suas artes</h2><span class="section-detail">Uma por lugar</span></div>
           <p id="upload-help" class="field-help">Toque no <b>+</b> da camiseta e escolha a logo. Depois <b>toque nela</b> para ajustar.</p>
           <details class="dica-logo">
             <summary>A minha logo está no WhatsApp ou no e-mail</summary>
@@ -145,6 +150,7 @@
               <button id="art-menu-remove" type="button" class="mini perigo"><span aria-hidden="true">✕</span> Tirar</button>
               <button id="art-menu-measures" type="button" class="mini" aria-expanded="false"><span aria-hidden="true">↔</span> Medidas</button>
             </div>
+            <p id="art-menu-max" class="art-menu-dica"></p>
             <p class="art-menu-dica"><span aria-hidden="true">✥</span> Para mudar de lugar, <b>arraste a logo</b> na camiseta.</p>
             <div id="art-menu-looks" class="art-menu-looks"></div>
             <p id="art-menu-note" class="art-menu-note" hidden></p>
@@ -184,7 +190,7 @@
           <p class="field-help">Ela entra no seu pedido. Quer outra peça (polo, outra cor, calça…)? Continue adicionando e envie tudo de uma vez pelo WhatsApp.</p>
           <div class="final-acoes">
             <a id="add-continue" class="primary-button" href="/mapra-previa/catalogo" data-add-order><span aria-hidden="true">+</span> Adicionar outra peça</a>
-            <a id="add-finish" class="primary-button preto" href="/mapra-previa/catalogo#pedido" data-add-order>Finalizar meu pedido <span aria-hidden="true">✓</span></a>
+            <a id="add-finish" class="primary-button preto" href="/mapra-previa/catalogo#pedido" data-add-order>Finalizar meu orçamento <span aria-hidden="true">✓</span></a>
             <button id="open-review" type="button" class="text-button">Ver como ficou antes de enviar</button>
           </div>
         </section>
@@ -203,7 +209,7 @@
     </div>
     <div class="review-actions">
       <a id="review-add-continue" class="primary-button" href="/mapra-previa/catalogo" data-add-order><span aria-hidden="true">+</span> Adicionar outra peça</a>
-      <a id="review-add-finish" class="primary-button preto" href="/mapra-previa/catalogo#pedido" data-add-order>Finalizar meu pedido <span aria-hidden="true">✓</span></a>
+      <a id="review-add-finish" class="primary-button preto" href="/mapra-previa/catalogo#pedido" data-add-order>Finalizar meu orçamento <span aria-hidden="true">✓</span></a>
       <button id="review-share" type="button" class="secondary-button" hidden>Mandar a prévia e as logos</button>
       <button id="review-back" type="button" class="text-button">Voltar e ajustar</button>
       <p id="review-help" class="field-help">Em “Finalizar”, você vê todas as peças do pedido e envia pelo WhatsApp, já com tudo escrito. Depois é só mandar as logos na conversa. A Mapra confere tudo antes de produzir.</p>

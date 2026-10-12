@@ -148,3 +148,15 @@ export function tintArt(data, tint) {
   }
   return copy;
 }
+
+// Retângulo dos pixels visíveis, já sem fundo; alfa até 16 não conta.
+export function visibleBounds(data, width, height) {
+  const full = { x: 0, y: 0, width, height };
+  let x0 = width, y0 = height, x1 = -1, y1 = -1;
+  for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
+    if (data[(y * width + x) * 4 + 3] <= 16) continue;
+    x0 = Math.min(x0, x); y0 = Math.min(y0, y);
+    x1 = Math.max(x1, x); y1 = Math.max(y1, y);
+  }
+  return x1 < 0 ? full : { x: x0, y: y0, width: x1 - x0 + 1, height: y1 - y0 + 1 };
+}
